@@ -142,14 +142,6 @@
       '</div>' +
     '</section>' +
 
-    '<section class="section spotlight inner">' +
-      '<span class="label" style="color:var(--grey)">Featured project</span>' +
-      '<h2 class="display" style="margin-top:18px">' + esc(spot.title) + '</h2>' +
-      '<p class="label scope">' + spot.scope.map(esc).join(" &nbsp;|&nbsp; ") + '</p>' +
-      '<p class="lede">' + esc(spot.description) + '</p>' +
-      '<a class="frame" href="#work-' + spot.slug + '"><img src="' + spot.images[0] + '" alt="' + esc(spot.title) + '"></a>' +
-    '</section>' +
-
     cta();
   }
   function bindHomeGrid() {
