@@ -207,7 +207,10 @@
           f.hits++; var cols = ["#ffffff", "#c3e3fb", "#095fe0", "#00a6e2", "#e4007f", "#ffe100"];
           for (var k = 0; k < 70; k++) { var an = Math.random() * 6.2832, v = 60 + Math.random() * 320; f.parts.push({ x: T.x, y: T.y, vx: Math.cos(an) * v, vy: Math.sin(an) * v, life: .9 + Math.random() * .7, age: 0, col: cols[k % cols.length] }); }
           f.rings.push({ x: T.x, y: T.y, t0: tt, hit: true });
-          if (f.hits === 20 && f.sec) { var h1 = f.sec.querySelector('h1'); if (h1 && !h1.querySelector('.fx-win')) h1.insertAdjacentHTML('beforeend', '<span class="fx-win">WIN!</span>'); }   // 20 hits: WIN! next to FLOOR.
+          if (f.hits === 20 && f.sec) {   // 20 hits: "Production floor." turns into "Production wins."
+            var sw = f.sec.querySelector('.fx-swap');
+            if (sw && !sw.classList.contains('won')) { sw.classList.add('out'); setTimeout(function () { sw.textContent = 'wins.'; sw.classList.remove('out'); sw.classList.add('won'); }, 260); }
+          }
           var np = wp(); T.x = np[0]; T.y = np[1]; T.to = wp(); T.trail = [];
         } else f.rings.push({ x: cx, y: cy, t0: tt });
       }
@@ -970,7 +973,7 @@
     return '' +
     '<section class="page-head inner" data-fx="path">' +
       '<span class="label" style="color:var(--grey)">Facilities</span>' +
-      '<h1 class="display" style="margin-top:20px">Production<br>floor.</h1>' +
+      '<h1 class="display" style="margin-top:20px">Production<br><span class="fx-swap">floor.</span></h1>' +
       '<div class="row"><span></span><p>디자인 스튜디오와 함께 자체 제작센터를 운영합니다. 인쇄, 가공, 조립을 직접 하기 때문에 샘플 확인이 빠르고, 디자인 의도를 양산 단계까지 지킬 수 있습니다.</p></div>' +
     '</section>' +
     '<section class="fac-wrap">' + D.facilities.map(function (f, i) {
