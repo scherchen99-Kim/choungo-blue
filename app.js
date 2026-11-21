@@ -33,12 +33,18 @@
   /* ---------------- Shared fragments ---------------- */
   var KB = window.CHOUNGO_KB || [];
   var tileIO = "IntersectionObserver" in window ? new IntersectionObserver(function (es) {
-    es.forEach(function (e) { e.target.classList.toggle("live", e.isIntersecting); });
+    es.forEach(function (e) { e.target.classList.toggle("live", e.isIntersecting); if (e.isIntersecting && e.target.classList.contains("pan")) setPan(e.target); });   // re-measure once visible (a cached image can be measured before layout)
   }, { rootMargin: "120px 0px" }) : null;
   function setPan(t) {
     var im = t.querySelector("img"); if (!im) return;
-    var go = function () { var d = im.offsetHeight - t.clientHeight; t.style.setProperty("--pan", (d > 0 ? -d : 0) + "px"); };
-    if (im.complete) go(); else im.addEventListener("load", go, { once: true });
+    var go = function () {
+      if (!im.offsetHeight || !t.clientHeight) return;
+      var d = im.offsetHeight - t.clientHeight, v = (d > 0 ? -d : 0) + "px";
+      if (t.style.getPropertyValue("--pan") === v) return;
+      t.style.setProperty("--pan", v);
+      im.style.animation = "none"; void im.offsetWidth; im.style.animation = "";   // Safari keeps the old value inside a running animation, so restart it
+    };
+    go(); im.addEventListener("load", go, { once: true });
   }
   function watchTiles(root) {
     (root || document).querySelectorAll(".tile").forEach(function (t) {
