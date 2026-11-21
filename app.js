@@ -537,7 +537,7 @@
     return '' +
     '<section class="page-head inner">' +
       '<span class="label" style="color:var(--grey)">Selected work</span>' +
-      '<h1 class="display" style="margin-top:20px">Portfolio</h1>' +
+      '<h1 class="display" style="margin-top:20px">Our<br>portfolio.</h1>' +
       '<div class="row"><span></span><p>브랜드 홈페이지부터 매장 POP, 인쇄물, 디스플레이, 사인까지. 기획하고 디자인한 것을 직접 만들어 현장에 세운 작업들입니다.</p></div>' +
     '</section>' +
     '<div class="portfolio-bar inner"><div class="filters" id="filters" role="group" aria-label="카테고리 필터">' + btns + '</div>' +
@@ -648,7 +648,7 @@
     return '' +
     '<section class="page-head inner">' +
       '<span class="label" style="color:var(--grey)">Contact</span>' +
-      '<h1 class="display" style="margin-top:20px">Let’s talk.</h1>' +
+      '<h1 class="display" style="margin-top:20px">Let’s talk.<br>Let’s make it.</h1>' +
       '<div class="row"><span></span><p>아직 정리되지 않은 아이디어도 괜찮습니다. 일정과 예산, 수량을 알려주시면 디자인부터 제작, 설치까지 맞는 방법을 함께 제안드립니다.</p></div>' +
     '</section>' +
     '<section class="section inner"><div class="contact-grid">' +
