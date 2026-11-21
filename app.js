@@ -396,7 +396,7 @@
       return { g: g, sc: sc, ec: ec, cols: cols, rows: rows, W: W };
     }
     var START = -1, EXIT = -2;
-    function cxy(k) { if (k === START) return [ox + (Z.sc + .5) * cell, oy - cell * .55]; if (k === EXIT) return [ox + (Z.ec + .5) * cell, oy + rows * cell + cell * .55]; return [ox + (k % cols + .5) * cell, oy + (Math.floor(k / cols) + .5) * cell]; }
+    function cxy(k) { if (k === START) return [ox + (Z.sc + .5) * cell, oy]; if (k === EXIT) return [ox + (Z.ec + .5) * cell, oy + rows * cell + cell * .55]; return [ox + (k % cols + .5) * cell, oy + (Math.floor(k / cols) + .5) * cell]; }   // START sits on the top line of the maze
     function nbrs(k) {   // open neighbours, including the virtual START / EXIT spots
       if (k === START) return [Z.sc]; if (k === EXIT) return [];
       var g = Z.g[k], ci = k % cols, cj = Math.floor(k / cols), o = [];
@@ -407,7 +407,12 @@
     if (!f.mz || f.mz.cols !== cols || f.mz.rows !== rows || f.mz.W !== W) {
       f.mz = build(); var Z = f.mz; f.pl = { k: START, to: START, u: 1 }; f.won = 0; f.safe = 0; f.open = false;
       var NP = W < 760 ? 8 : 12, used = {}; f.pel = [];
-      while (f.pel.length < NP) { var pk = Math.floor(Math.random() * N); if (used[pk] || pk < cols) continue; used[pk] = 1; f.pel.push({ k: pk, got: 0 }); }
+      // keep the drops clear of the title and the text, so none of them hides behind a letter
+      var blocks = []; if (f.sec) { var sr = f.sec.getBoundingClientRect(); f.sec.querySelectorAll("h1, .row p, .label").forEach(function (el) {
+        var rg = document.createRange(); rg.selectNodeContents(el); Array.prototype.forEach.call(rg.getClientRects(), function (b) { blocks.push([b.left - sr.left - 10, b.top - sr.top - 10, b.right - sr.left + 10, b.bottom - sr.top + 10]); }); }); }
+      function clear(k) { var x = ox + (k % cols + .5) * cell, y = oy + (Math.floor(k / cols) + .5) * cell; return blocks.every(function (b) { return x < b[0] || x > b[2] || y < b[1] || y > b[3]; }); }
+      var tries = 0;
+      while (f.pel.length < NP && tries++ < 4000) { var pk = Math.floor(Math.random() * N); if (used[pk] || pk < cols || !clear(pk)) continue; used[pk] = 1; f.pel.push({ k: pk, got: 0 }); }
       f.ch = []; for (var cq = 0; cq < (W < 760 ? 1 : 2); cq++) { var ck = (rows - 1 - cq * 2) * cols + Math.floor(Math.random() * cols); f.ch.push({ k: ck, to: ck, u: 1 }); }
     }
     var Z = f.mz, P = f.pl;
@@ -459,20 +464,20 @@
         setTimeout(function () { sw.classList.add("out"); setTimeout(function () { sw.textContent = "Let’s talk."; sw.classList.remove("won"); void sw.offsetWidth; sw.classList.remove("out"); f.mz = null; f.wonDone = false; }, 450); }, 6260); }
     }
     // draw (this layer sits above the title, so the corridors stay readable)
-    c.strokeStyle = "rgba(0,127,255,.22)"; c.lineWidth = W < 760 ? 6 : 8; c.lineCap = "round"; c.beginPath();   // thick, soft walls (old arcade feel); the title hides parts of the maze, which is part of the fun
+    c.strokeStyle = "rgba(0,127,255,.13)"; c.lineWidth = W < 760 ? 6 : 8; c.lineCap = "round"; c.beginPath();   // thick, soft walls (old arcade feel); the title hides parts of the maze, which is part of the fun
     for (var j = 0; j < rows; j++) for (var i = 0; i < cols; i++) {
       var w = Z.g[j * cols + i], X = ox + i * cell, Y = oy + j * cell;
       if (w[0]) { c.moveTo(X, Y); c.lineTo(X + cell, Y); } if (w[3]) { c.moveTo(X, Y); c.lineTo(X, Y + cell); }
       if (j === rows - 1 && w[2]) { c.moveTo(X, Y + cell); c.lineTo(X + cell, Y + cell); } if (i === cols - 1 && w[1]) { c.moveTo(X + cell, Y); c.lineTo(X + cell, Y + cell); }
     }
     c.stroke();
-    c.font = "600 10px ui-monospace, Menlo, monospace"; c.textAlign = "center"; c.fillStyle = "rgba(195,227,251,.75)";
+    c.font = "500 9px ui-monospace, Menlo, monospace"; c.textAlign = "left"; c.fillStyle = "rgba(195,227,251,.38)";
     var st0 = cxy(START), ex0 = cxy(EXIT);
-    c.fillText("START", st0[0], st0[1] - 14);
-    if (f.open) { c.fillStyle = "rgba(0,127,255," + (.7 + .3 * Math.sin(tt * 4)).toFixed(2) + ")"; c.fillText("EXIT ↓", ex0[0], ex0[1] + 4); }
-    else { c.fillStyle = "rgba(195,227,251,.35)"; c.fillText("EXIT", ex0[0], ex0[1] + 4); c.strokeStyle = FX_C + ".3)"; c.lineWidth = 2; c.beginPath(); c.moveTo(ex0[0] - cell / 2, oy + rows * cell); c.lineTo(ex0[0] + cell / 2, oy + rows * cell); c.stroke(); }   // closed until every drop is eaten
-    c.textAlign = "right"; c.fillStyle = "rgba(195,227,251,.7)"; c.fillText((f.open ? "EXIT OPEN  " : "") + String(gotN).padStart(2, "0") + "/" + f.pel.length, ox + cols * cell, oy + rows * cell + 18); c.textAlign = "start";
-    f.pel.forEach(function (pe) { var q4 = cxy(pe.k), ga = pe.got ? Math.max(0, 1 - (tt - pe.got) / .35) : 1; if (ga <= 0) return; c.globalAlpha = ga; c.fillStyle = "#ffffff"; c.beginPath(); c.arc(q4[0], q4[1], pe.got ? 3 + 8 * (1 - ga) : 3 + .7 * Math.sin(tt * 4 + pe.k), 0, 6.2832); c.fill(); c.strokeStyle = "rgba(0,127,255,.75)"; c.lineWidth = 1; c.stroke(); c.globalAlpha = 1; });   // blue rim: visible on the white title too
+    c.textAlign = "center"; c.fillText("START", st0[0], oy - 9);   // labels sit right at the two openings
+    if (f.open) { c.fillStyle = "rgba(0,127,255," + (.45 + .2 * Math.sin(tt * 4)).toFixed(2) + ")"; c.fillText("EXIT ↓", ex0[0], oy + rows * cell + 16); }
+    else { c.fillStyle = "rgba(195,227,251,.3)"; c.fillText("EXIT", ex0[0], oy + rows * cell + 16); c.strokeStyle = "rgba(0,127,255,.13)"; c.lineWidth = 2; c.beginPath(); c.moveTo(ex0[0] - cell / 2, oy + rows * cell); c.lineTo(ex0[0] + cell / 2, oy + rows * cell); c.stroke(); }   // closed until every drop is eaten
+    c.textAlign = "right"; c.fillStyle = "rgba(195,227,251,.38)"; c.fillText((f.open ? "EXIT OPEN  " : "") + String(gotN).padStart(2, "0") + "/" + f.pel.length, ox + cols * cell, oy + rows * cell + 18); c.textAlign = "start";
+    f.pel.forEach(function (pe) { var q4 = cxy(pe.k), ga = pe.got ? Math.max(0, 1 - (tt - pe.got) / .35) : 1; if (ga <= 0) return; c.globalAlpha = .55 * ga; c.fillStyle = "#ffffff"; c.beginPath(); c.arc(q4[0], q4[1], pe.got ? 3 + 8 * (1 - ga) : 3 + .5 * Math.sin(tt * 3 + pe.k), 0, 6.2832); c.fill(); c.globalAlpha = 1; });   // blue rim: visible on the white title too
     f.ch.forEach(function (C) {   // ghosts: one translucent white blot each
       if (C.x === undefined) return; var R5 = cell * .27;
       c.fillStyle = "rgba(255,255,255,.2)"; c.beginPath(); c.arc(C.x, C.y, R5, 0, 6.2832);
@@ -482,8 +487,8 @@
     });
     if (f.hit && tt - f.hit < .5) { c.fillStyle = "rgba(255,255,255," + (.12 * (1 - (tt - f.hit) / .5)).toFixed(3) + ")"; c.fillRect(0, 0, W, H); }
     c.globalAlpha = tt < f.safe && Math.sin(tt * 30) > 0 ? .3 : 1;
-    c.fillStyle = "#ffffff"; c.beginPath(); c.arc(px, py, r, 0, 6.2832); c.fill(); c.globalAlpha = 1;
-    c.strokeStyle = "rgba(0,127,255,.9)"; c.lineWidth = 1.5; c.beginPath(); c.arc(px, py, r + 4 + Math.sin(tt * 5), 0, 6.2832); c.stroke();
+    c.fillStyle = "rgba(195,227,251,.6)"; c.beginPath(); c.arc(px, py, r, 0, 6.2832); c.fill(); c.globalAlpha = 1;   // the hero, soft too
+    c.strokeStyle = "rgba(0,127,255,.4)"; c.lineWidth = 1.2; c.beginPath(); c.arc(px, py, r + 4 + Math.sin(tt * 3), 0, 6.2832); c.stroke();
   }
   function fxTick(t) {
     fxHeads = fxHeads.filter(function (s) { return document.body.contains(s); });
