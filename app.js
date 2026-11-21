@@ -727,6 +727,17 @@
     if (Math.abs(dx) > 50) lbShow(lbI + (dx < 0 ? 1 : -1));
   });
 
+  /* logo or menu link to the page you are already on: glide back to the top instead of doing nothing */
+  document.addEventListener("click", function (e) {
+    var a = e.target.closest && e.target.closest('a[href^="#"]');
+    if (!a || a.closest("#mobileMenu")) return;
+    var target = a.getAttribute("href"), here = location.hash || "#home";
+    if (target === here || (target === "#home" && (here === "#" || here === ""))) {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  });
+
   /* ---------------- Mobile menu ---------------- */
   var mm = document.getElementById("mobileMenu");
   function setMenu(open) {
@@ -743,7 +754,7 @@
       e.preventDefault();
       var href = a.getAttribute("href");
       a.classList.add("tapped");
-      setTimeout(function () { setMenu(false); a.classList.remove("tapped"); location.hash = href; }, 320);
+      setTimeout(function () { setMenu(false); a.classList.remove("tapped"); if (href === (location.hash || "#home")) window.scrollTo({ top: 0, behavior: "smooth" }); else location.hash = href; }, 320);
     });
   });
 
