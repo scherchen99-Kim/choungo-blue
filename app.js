@@ -133,6 +133,72 @@
     });
     if (!fxT && fxHeads.length) fxT = requestAnimationFrame(fxTick);
   }
+  var FX_C = "rgba(195,227,251,";
+  function fxDots(c, W, H, tt, mx, my) {   // About: halftone screen, bands of bigger dots drift across
+    var gap = W < 760 ? 20 : 26; c.fillStyle = FX_C + ".16)"; c.beginPath();
+    for (var y = gap / 2; y < H; y += gap) for (var x = gap / 2; x < W; x += gap) {
+      var b = Math.sin((x * .6 + y) * .012 - tt * .7); b = b > 0 ? b * b * b : 0;
+      var rad = .7 + 1.9 * b, dx = x - mx, dy = y - my, d2 = dx * dx + dy * dy;
+      if (d2 < 32400) { var k = 1 - Math.sqrt(d2) / 180; rad += 3.2 * k * k; }
+      c.moveTo(x + rad, y); c.arc(x, y, rad, 0, 6.2832);
+    }
+    c.fill();
+  }
+  function fxGrid(c, W, H, tt, mx, my, f) {   // Portfolio: a layout grid with crop marks; frames light up one by one like work loading in
+    var cw = Math.max(64, W / 14), ch = cw * .625, cols = Math.ceil(W / cw), rows = Math.ceil(H / ch);
+    f.cells = f.cells || []; f.next = f.next || 0;
+    if (tt > f.next) { f.cells.push({ i: Math.floor(Math.random() * cols), j: Math.floor(Math.random() * rows), t0: tt }); f.next = tt + .45; }
+    f.cells = f.cells.filter(function (q) { return tt - q.t0 < 2.6; });
+    var hi = Math.floor(mx / cw), hj = Math.floor(my / ch);
+    f.cells.concat(mx > 0 && my > 0 && my < H ? [{ i: hi, j: hj, hover: true }] : []).forEach(function (q) {
+      var a = q.hover ? .28 : Math.sin(Math.min(1, (tt - q.t0) / 2.6) * Math.PI) * .22;
+      c.fillStyle = "rgba(9,95,224," + a.toFixed(3) + ")"; c.fillRect(q.i * cw + 3, q.j * ch + 3, cw - 6, ch - 6);
+    });
+    c.strokeStyle = FX_C + ".2)"; c.lineWidth = 1; c.beginPath();
+    for (var j = 0; j <= rows; j++) for (var i = 0; i <= cols; i++) { var x = i * cw, y = j * ch; c.moveTo(x - 4, y); c.lineTo(x + 4, y); c.moveTo(x, y - 4); c.lineTo(x, y + 4); }
+    c.stroke();
+  }
+  function fxPath(c, W, H, tt, mx, my, f) {   // Facilities: a CNC tool head cutting a pocket path, plus a machine crosshair with coordinates
+    if (!f.path || f.pw !== W || f.ph !== H) {
+      var pts = [], m = 36, step = 26;
+      for (var k = 0; 110 + k * step < 110 + (H - 110 - m) / 2 - 10 && m + k * step < W / 2 - 10; k++) {
+        var x0 = m + k * step, y0 = 110 + k * step, x1 = W - m - k * step, y1 = H - m - k * step;   // keep clear of the header bar
+        pts.push([x0, y0], [x1, y0], [x1, y1], [x0, y1], [x0, y0 + step]);
+      }
+      var acc = [0]; for (var q = 1; q < pts.length; q++) acc.push(acc[q - 1] + Math.hypot(pts[q][0] - pts[q - 1][0], pts[q][1] - pts[q - 1][1]));
+      f.path = pts; f.acc = acc; f.pw = W; f.ph = H;
+    }
+    var P = f.path, A = f.acc, L = A[A.length - 1], s = (tt * 220 + 1500) % L, TR = 1100;
+    function at(d) { d = ((d % L) + L) % L; var q = 1; while (q < A.length - 1 && A[q] < d) q++; var u = (d - A[q - 1]) / ((A[q] - A[q - 1]) || 1); return [P[q - 1][0] + (P[q][0] - P[q - 1][0]) * u, P[q - 1][1] + (P[q][1] - P[q - 1][1]) * u]; }
+    c.lineWidth = 1.2;
+    for (var g = 0; g < 18; g++) {   // fading trail behind the head
+      var p0 = at(s - TR + g * TR / 18), p1 = at(s - TR + (g + 1) * TR / 18);
+      c.strokeStyle = FX_C + (.03 + .42 * g / 18).toFixed(3) + ")"; c.beginPath(); c.moveTo(p0[0], p0[1]);
+      for (var h = 1; h <= 6; h++) { var pp = at(s - TR + g * TR / 18 + h * TR / 108); c.lineTo(pp[0], pp[1]); }
+      c.stroke();
+    }
+    var hd = at(s); c.fillStyle = "#ffffff"; c.beginPath(); c.arc(hd[0], hd[1], 2.6, 0, 6.2832); c.fill();
+    c.strokeStyle = "rgba(9,95,224,.5)"; c.beginPath(); c.arc(hd[0], hd[1], 9, 0, 6.2832); c.stroke();
+    if (mx > 0 && my > 0 && my < H) {
+      c.strokeStyle = FX_C + ".16)"; c.lineWidth = 1; c.beginPath(); c.moveTo(0, my); c.lineTo(W, my); c.moveTo(mx, 0); c.lineTo(mx, H); c.stroke();
+      c.fillStyle = FX_C + ".55)"; c.font = "500 10px ui-monospace, Menlo, monospace";
+      var lab = "X " + (mx / 2).toFixed(1).padStart(6, "0") + "   Y " + (my / 2).toFixed(1).padStart(6, "0"), tw = c.measureText(lab).width;
+      c.fillText(lab, mx + 10 + tw > W - 8 ? mx - 10 - tw : mx + 10, my - 10);   // flips to the left near the right edge
+    }
+  }
+  function fxWave(c, W, H, tt, mx, my) {   // Contact: soft voice-like lines that swell where the pointer is
+    var n = 7, top = H * .22, gapY = (H * .7) / n; c.lineWidth = 1.2;
+    for (var i = 0; i < n; i++) {
+      var y0 = top + i * gapY; c.strokeStyle = FX_C + (.1 + .03 * (i % 3)).toFixed(2) + ")"; c.beginPath();
+      for (var x = 0; x <= W; x += 8) {
+        var dx = x - mx, dy = y0 - my, near = Math.exp(-(dx * dx) / 26000 - (dy * dy) / 30000);
+        var amp = 5 + 34 * near + 6 * Math.sin(tt * .5 + i);
+        var y = y0 + amp * Math.sin(x * .011 + tt * (.9 + i * .07) + i * .8);
+        if (x) c.lineTo(x, y); else c.moveTo(x, y);
+      }
+      c.stroke();
+    }
+  }
   function fxTick(t) {
     fxHeads = fxHeads.filter(function (s) { return document.body.contains(s); });
     var tt = t / 1000;
@@ -141,16 +207,11 @@
       var f = sec._fx, dpr = Math.min(window.devicePixelRatio || 1, 1.5), W = Math.round(r.width), H = Math.round(r.height);
       if (f.w !== W || f.h !== H) { f.w = W; f.h = H; f.cv.width = W * dpr; f.cv.height = H * dpr; }
       var c = f.ctx; c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, W, H);
-      var gap = W < 760 ? 20 : 26, mx = fxPtr.x - r.left, my = fxPtr.y - r.top;
-      c.fillStyle = "rgba(195,227,251,.16)"; c.beginPath();
-      for (var y = gap / 2; y < H; y += gap) for (var x = gap / 2; x < W; x += gap) {
-        var b = Math.sin((x * .6 + y) * .012 - tt * .7); b = b > 0 ? b * b * b : 0;        // a travelling band
-        var rad = .7 + 1.9 * b;
-        var dx = x - mx, dy = y - my, d2 = dx * dx + dy * dy;
-        if (d2 < 32400) { var k = 1 - Math.sqrt(d2) / 180; rad += 3.2 * k * k; }        // swell near the pointer
-        c.moveTo(x + rad, y); c.arc(x, y, rad, 0, 6.2832);
-      }
-      c.fill();
+      var mx = fxPtr.x - r.left, my = fxPtr.y - r.top, kind = sec.getAttribute("data-fx");
+      if (kind === "grid") fxGrid(c, W, H, tt, mx, my, f);
+      else if (kind === "path") fxPath(c, W, H, tt, mx, my, f);
+      else if (kind === "wave") fxWave(c, W, H, tt, mx, my);
+      else fxDots(c, W, H, tt, mx, my);
     });
     fxT = fxHeads.length ? requestAnimationFrame(fxTick) : 0;
   }
@@ -711,7 +772,7 @@
   /* ---------------- ABOUT ---------------- */
   function about() {
     return '' +
-    '<section class="page-head inner">' +
+    '<section class="page-head inner" data-fx="dots">' +
       '<span class="label" style="color:var(--grey)">About / Services</span>' +
       '<h1 class="display" style="margin-top:20px">We design it.<br>We make it.</h1>' +
       '<div class="row"><span></span><p>CHOUNGO BLUE는 디자인 스튜디오의 감각과 제작사의 실행력을 함께 가진 회사입니다. 브랜드가 매장과 거리에서 사람을 만나는 모든 접점을 기획하고, 디자인하고, 직접 만듭니다.</p></div>' +
@@ -771,7 +832,7 @@
       return '<button type="button" data-f="' + c.id + '" aria-pressed="' + (c.id === currentFilter) + '">' + esc(c.label) + '<sup>' + (counts[c.id] || 0) + '</sup></button>';
     }).join("");
     return '' +
-    '<section class="page-head inner">' +
+    '<section class="page-head inner" data-fx="grid">' +
       '<span class="label" style="color:var(--grey)">Selected work</span>' +
       '<h1 class="display" style="margin-top:20px">Our<br>portfolio.</h1>' +
       '<div class="row"><span></span><p>브랜드 홈페이지부터 매장 POP, 인쇄물, 디스플레이, 사인까지. 기획하고 디자인한 것을 직접 만들어 현장에 세운 작업들입니다.</p></div>' +
@@ -853,7 +914,7 @@
   /* ---------------- FACILITIES ---------------- */
   function facilities() {
     return '' +
-    '<section class="page-head inner">' +
+    '<section class="page-head inner" data-fx="path">' +
       '<span class="label" style="color:var(--grey)">Facilities</span>' +
       '<h1 class="display" style="margin-top:20px">Production<br>floor.</h1>' +
       '<div class="row"><span></span><p>디자인 스튜디오와 함께 자체 제작센터를 운영합니다. 인쇄, 가공, 조립을 직접 하기 때문에 샘플 확인이 빠르고, 디자인 의도를 양산 단계까지 지킬 수 있습니다.</p></div>' +
@@ -881,7 +942,7 @@
     var c = D.company;
     var types = ["POP / POSM", "Graphic & Print", "Display / VMD", "Signage", "Interior", "기타"];
     return '' +
-    '<section class="page-head inner">' +
+    '<section class="page-head inner" data-fx="wave">' +
       '<span class="label" style="color:var(--grey)">Contact</span>' +
       '<h1 class="display" style="margin-top:20px">Let’s talk.<br>Let’s make it.</h1>' +
       '<div class="row"><span></span><p>아직 정리되지 않은 아이디어도 괜찮습니다. 일정과 예산, 수량을 알려주시면 디자인부터 제작, 설치까지 맞는 방법을 함께 제안드립니다.</p></div>' +
