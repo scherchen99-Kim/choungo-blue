@@ -353,35 +353,49 @@
         }
         // one continuous edit: marquee-drag from the bottom corner selects the old copy -> it shows as editable outlines ->
         // the pen tool walks each line turning old outlines into new ones -> the fill pours in (outline stays, so weight doesn't jump)
-        var T_IN = .3, T_DRAG = 1.2, T_SELD = 1.5, T_A = 2.6, T_B = 3.7, T_FILL = 4.6;
-        var lw = Math.max(1.2, size / 90);
+        // select the old copy -> it is deleted -> the corner is dragged out and the new copy appears as a picture (a plate)
+        // -> the pen tool traces each letter -> the plate around the letters is cut away and only the letters stay
+        var T_IN = .3, T_DRAG = 1.0, T_DEL = 1.3, T_GROW = 2.1, T_A = 3.1, T_B = 4.1, T_CUT = 4.8;
+        var PLATE = "#007fff", PATH = "#000055";
+        var lw = Math.max(1.5, size / 80);
+        var oX0 = pad, oY0 = prv ? prv[0].top : cur[0].top, oX1 = pad + (prv ? Math.max(prv[0].width, prv[1].width) : 40), oY1 = prv ? prv[1].bottom : cur[1].bottom;
+        var nX0 = pad - size * .12, nY0 = cur[0].top - size * .14, nX1 = pad + Math.max(cur[0].width, cur[1].width) + size * .12, nY1 = cur[1].bottom + size * .12;
+        var sx0 = oX1 + 30, sy0 = oY1 + 30;
         function anchorsFor(g, x0, x1) {
-          ctx.fillStyle = "#fff"; ctx.strokeStyle = CYAN; ctx.lineWidth = 1.5;
+          ctx.fillStyle = "#fff"; ctx.strokeStyle = PATH; ctx.lineWidth = 1.5;
           var step = Math.max(40, size * .55);
           for (var ax = pad; ax <= pad + g.width; ax += step) { if (ax < x0 || ax > x1) continue; [g.top + size * .1, g.bottom - size * .02].forEach(function (ay) { ctx.fillRect(ax - 3.5, ay - 3.5, 7, 7); ctx.strokeRect(ax - 3.5, ay - 3.5, 7, 7); }); }
         }
-        function outline(g, x0, x1) { ctx.save(); ctx.beginPath(); ctx.rect(x0, 0, x1 - x0, H); ctx.clip(); ctx.lineWidth = lw; ctx.strokeStyle = WHITE; drawText(g, "stroke"); ctx.restore(); }
-        var gx0 = pad, gy0 = cur[0].top, gx1 = pad + Math.max(cur[0].width, cur[1].width, prv ? prv[0].width : 0, prv ? prv[1].width : 0), gy1 = cur[1].bottom;
-        var sx0 = gx1 + 30, sy0 = gy1 + 30;
-        if (t < T_SELD) {
+        if (t < T_DEL) {
+          // 1) marquee-select the old copy
           if (prv) { drawText(prv[0], "fill", PRV); drawText(prv[1], "fill", PRV); }
-          var dp = ease(prog(t, [T_IN, T_DRAG])), cxp = sx0 + (gx0 - 20 - sx0) * dp, cyp = sy0 + (gy0 - 20 - sy0) * dp;
+          var dp = ease(prog(t, [T_IN, T_DRAG])), cxp = sx0 + (oX0 - 20 - sx0) * dp, cyp = sy0 + (oY0 - 20 - sy0) * dp;
           if (t > T_IN && t < T_DRAG) { ctx.fillStyle = "rgba(9,95,224,.22)"; ctx.fillRect(cxp, cyp, sx0 - cxp, sy0 - cyp); ctx.setLineDash([5, 4]); ctx.strokeStyle = CYAN; ctx.lineWidth = 1; ctx.strokeRect(cxp, cyp, sx0 - cxp, sy0 - cyp); ctx.setLineDash([]); }
-          if (t >= T_DRAG) handles(gx0 - 8, gy0 - 8, gx1 + 8, gy1 + 8);
+          if (t >= T_DRAG) handles(oX0 - 8, oY0 - 8, oX1 + 8, oY1 + 8);
           var mv = ease(prog(t, [0, T_IN]));
-          arrow(t < T_IN ? W * .7 + (sx0 - W * .7) * mv : cxp, t < T_IN ? H * .95 + (sy0 - H * .95) * mv : cyp);
+          arrow(t < T_IN ? W * .7 + (sx0 - W * .7) * mv : (t < T_DRAG ? cxp : oX1 + 8), t < T_IN ? H * .95 + (sy0 - H * .95) * mv : (t < T_DRAG ? cyp : oY1 + 8));
         } else {
-          var penX = null, penY = null, pf = ease(prog(t, [T_B + .1, T_FILL]));
-          [[0, T_SELD, T_A], [1, T_A, T_B]].forEach(function (d) {
-            var gi = d[0], gN = cur[gi], gO = prv ? prv[gi] : null, pp = ease(prog(t, [d[1], d[2]]));
-            var end = pad + Math.max(gN.width, gO ? gO.width : 0) + 6, ox = pad - 6 + (end - pad + 6) * pp;
-            var fx = pf > 0 ? pad + (gN.width + 6) * pf : 0;
-            outline(gN, fx, ox);                        // behind the pen: new paths (the fill replaces them, so the weight never changes)
-            if (gO && pp < 1) outline(gO, ox, W);       // ahead of the pen: old paths still to edit
-            if (pf > 0) clipX(gN, 0, pad + (gN.width + 6) * pf);
-            if (pf < 1) anchorsFor(gN, pad + (gN.width + 6) * pf, ox);
-            if (gO && pp < 1) anchorsFor(gO, ox, W);
-            if (pp > 0 && pp < 1) { penX = ox; penY = gN.top + (gN.bottom - gN.top) * (.5 + .35 * Math.sin(t * 9)); }
+          // 2) old copy deleted; drag the corner out — the plate (new copy as a picture) grows with the box
+          var gp = ease(prog(t, [T_DEL, T_GROW]));
+          var bx0 = oX0 + (nX0 - oX0) * gp, by0 = oY0 + (nY0 - oY0) * gp, bx1 = oX1 + (nX1 - oX1) * gp, by1 = oY1 + (nY1 - oY1) * gp;
+          var cut = ease(prog(t, [T_B + .15, T_CUT]));
+          if (cut < 1) {
+            ctx.save(); ctx.beginPath(); ctx.rect(bx0, by0, bx1 - bx0, by1 - by0); ctx.clip();
+            ctx.globalAlpha = 1 - cut; ctx.fillStyle = PLATE; ctx.fillRect(bx0, by0, bx1 - bx0, by1 - by0); ctx.globalAlpha = 1;
+            drawText(cur[0], "fill", CUR); drawText(cur[1], "fill", CUR);
+            ctx.restore();
+          } else { drawText(cur[0], "fill", CUR); drawText(cur[1], "fill", CUR); }
+          if (t < T_A - .9) handles(bx0 - 8, by0 - 8, bx1 + 8, by1 + 8);
+          if (t < T_GROW + .15) arrow(bx1 + 8, by1 + 8);
+          // 3) pen tool traces the letter outlines, line by line
+          var penX = null, penY = null;
+          [[0, T_GROW + .1, T_A], [1, T_A, T_B]].forEach(function (d) {
+            var g = cur[d[0]], pp = ease(prog(t, [d[1], d[2]])), ox = pad - 6 + (g.width + 12) * pp;
+            if (pp <= 0 || cut >= 1) return;
+            ctx.save(); ctx.globalAlpha = 1 - cut; ctx.beginPath(); ctx.rect(0, 0, ox, H); ctx.clip();
+            ctx.lineWidth = lw; ctx.strokeStyle = PATH; drawText(g, "stroke"); ctx.restore();
+            if (cut <= 0) anchorsFor(g, pad, ox);
+            if (pp < 1) { penX = ox; penY = g.top + (g.bottom - g.top) * (.5 + .35 * Math.sin(t * 9)); }
           });
           if (penX !== null) penIcon(penX, penY);
         }
