@@ -512,8 +512,7 @@
           [A0, B0].forEach(function (g, gi) {
             if (finished) { drawText(g, "fill", CUR); return; }
             clipX(g, 0, cut[gi]);                                  // cut letters: new copy
-            if (t >= T0 || !prv) {                                  // not yet reached: faint cutting path of the new letters
-              ctx.save(); ctx.beginPath(); ctx.rect(cut[gi], 0, W, H); ctx.clip(); ctx.lineWidth = Math.max(1, size / 110); ctx.strokeStyle = "rgba(255,255,255,.28)"; drawText(g, "stroke"); ctx.restore();
+            if (t >= T0 || !prv) {                                  // not yet reached: nothing (the laser writes onto an empty field)
             } else paintClip(prv[gi], gi, cbPrev, 0, W);
           });
           if (idx >= 0 && !finished) {
