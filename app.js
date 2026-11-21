@@ -54,6 +54,42 @@
     });
   }
   window.addEventListener("resize", function () { document.querySelectorAll(".tile.pan").forEach(setPan); });
+  // endless rows (portfolio pictures on phones, partner logos): moved by script, so they keep running even when
+  // the phone asks for reduced motion and Safari would freeze a CSS animation; off-screen rows are skipped
+  var marqs = [], marqT = 0;
+  var marqIO = "IntersectionObserver" in window ? new IntersectionObserver(function (es) {
+    es.forEach(function (e) { if (e.target._mq) e.target._mq.vis = e.isIntersecting; });
+  }, { rootMargin: "100px 0px" }) : null;
+  function startMarq() {
+    document.querySelectorAll(".m-track, .p-track").forEach(function (el) {
+      if (el._mq) return;
+      var rev = !!el.closest(".m-row.rev");
+      el._mq = { x: 0, dir: rev ? -1 : 1, speed: el.classList.contains("p-track") ? 55 : 26, vis: !marqIO, hover: false, start: rev };
+      if (marqIO) marqIO.observe(el);
+      var host = el.closest(".partners");
+      if (host && window.matchMedia("(hover: hover)").matches) {
+        host.addEventListener("mouseenter", function () { el._mq.hover = true; });
+        host.addEventListener("mouseleave", function () { el._mq.hover = false; });
+      }
+      marqs.push(el);
+    });
+    if (!marqT) marqT = requestAnimationFrame(marqTick);
+  }
+  var marqLast = 0;
+  function marqTick(t) {
+    var dt = marqLast ? Math.min(.05, (t - marqLast) / 1000) : 0; marqLast = t;
+    marqs = marqs.filter(function (el) { return document.body.contains(el); });
+    marqs.forEach(function (el) {
+      var m = el._mq; if (!m.vis || m.hover || el.offsetParent === null) return;
+      if (el.querySelector(".tile.show")) return;   // a caption is open: hold the row
+      var half = el.scrollWidth / 2; if (!half) return;
+      if (m.start) { m.x = half / 2; m.start = false; }
+      m.x = ((m.x + m.speed * dt * m.dir) % half + half) % half;
+      el.style.transform = "translate3d(" + (-m.x).toFixed(1) + "px,0,0)";
+    });
+    marqT = marqs.length ? requestAnimationFrame(marqTick) : 0;
+    if (!marqT) marqLast = 0;
+  }
   function webIdx(p) { return D.projects.filter(function (q) { return q.category === "web"; }).indexOf(p); }   // staggers the web previews
   function tile(p, i) {
     var motion = p.category === "web" ? " pan" : (!p.cover && KB.indexOf(p.images[0]) >= 0 ? " kb" : "");   // curated covers stay still
@@ -913,6 +949,7 @@
       if (R.r === "home") { startHero(); bindHomeGrid(); bindFacRot(); }
       if (R.r === "portfolio") bindPortfolio();
       watchTiles(document.getElementById("view"));
+      startMarq();
       if (R.r === "work") bindGallery(R.slug);
       if (R.r === "facilities") bindFacilities();
       if (R.r === "contact") bindContact();

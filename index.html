@@ -216,13 +216,12 @@ p { margin: 0; }
 .partners { background: var(--white); color: var(--black); padding-block: clamp(56px, 7vw, 96px); overflow: hidden; border-top: 1px solid var(--line); }
 .partners .label { color: var(--blue); }
 .partners h2 { font-family: var(--display); font-weight: 850; font-stretch: 75%; text-transform: uppercase; font-size: clamp(32px, 4vw, 60px); line-height: 1; margin-top: 12px; }
-.p-track { display: flex; gap: clamp(40px, 6vw, 88px); width: max-content; margin-top: clamp(32px, 4vw, 56px); animation: pmarq 40s linear infinite; }
+.p-track { display: flex; gap: clamp(40px, 6vw, 88px); width: max-content; margin-top: clamp(32px, 4vw, 56px); will-change: transform; }
 .p-track span { font-family: var(--display); font-weight: 800; font-size: clamp(20px, 2.2vw, 32px); letter-spacing: .02em; color: #9aa6b4; white-space: nowrap; transition: color .3s ease; }
 .p-track span:hover { color: var(--black); }
 .p-track { align-items: center; gap: 0; }
 .p-track .p-item { flex: none; display: flex; align-items: center; padding-right: clamp(48px, 6vw, 96px); }   /* spacing inside each item, so the two halves are exactly equal and the loop never jumps */
 .p-track img { width: auto; max-width: none; object-fit: contain; display: block; }
-.partners:hover .p-track { animation-play-state: paused; }
 @keyframes pmarq { to { transform: translateX(-50%); } }
 .partners .note { margin-top: 28px; font-size: 12.5px; color: var(--grey); }
 /* ---------- Footer ---------- */
@@ -286,7 +285,7 @@ p { margin: 0; }
 @media (max-width: 640px) { .p-next { grid-template-columns: 1fr; } .p-next a.nx .t { text-align: left; } }
 
 /* ---------- Lightbox ---------- */
-.lb { position: fixed; inset: 0; z-index: 90; background: rgba(8,8,9,.97); color: var(--white); display: grid; grid-template-rows: auto 1fr auto; opacity: 0; pointer-events: none; transition: opacity .35s var(--ease); padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+.lb { position: fixed; inset: 0; z-index: 90; background: #08080a; color: var(--white); display: grid; grid-template-rows: auto 1fr auto; opacity: 0; pointer-events: none; transition: opacity .35s var(--ease); padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
 .lb.open { opacity: 1; pointer-events: auto; }
 .lb-top, .lb-bot { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-block: 18px; }
 .lb-stage { position: relative; display: grid; place-items: center; min-height: 0; padding: 0 max(64px, var(--gutter)); }
@@ -297,7 +296,14 @@ p { margin: 0; }
 .lb-prev { left: max(10px, env(safe-area-inset-left, 0px)); }
 .lb-next { right: max(10px, env(safe-area-inset-right, 0px)); }
 .lb .count { font-variant-numeric: tabular-nums; }
-@media (max-width: 640px) { .lb-stage { padding: 0 var(--gutter); } .lb-nav { top: auto; bottom: -62px; transform: none; } }
+@media (max-width: 640px) {
+  .lb-stage { padding: 0; }
+  .lb-bot { min-height: 68px; padding-block: 0; }
+  /* arrows sit together at the right of the bottom bar, the counter on the left, nothing overlaps */
+  .lb-nav { top: auto; bottom: -56px; transform: none; width: 44px; height: 44px; font-size: 18px; }
+  .lb-prev { left: auto; right: calc(max(var(--pad), var(--gutter-r)) + 52px); }
+  .lb-next { right: max(var(--pad), var(--gutter-r)); }
+}
 
 /* ---------- About page ---------- */
 .svc-rows { border-top: 1px solid var(--line); }
@@ -527,8 +533,6 @@ body.scrolling .work-grid { pointer-events: none; }   /* no hover effects firing
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
   /* the slow logo and picture rows keep moving (they are the point of those sections) */
-  .p-track { animation-duration: 40s !important; animation-iteration-count: infinite !important; }
-  .m-track { animation-duration: var(--dur) !important; animation-iteration-count: infinite !important; }
 }
 /* ---------- phones: portfolio as two endless rows moving in opposite directions ---------- */
 .m-marq, .m-row { display: none; }
@@ -536,10 +540,7 @@ body.scrolling .work-grid { pointer-events: none; }   /* no hover effects firing
   #homeGrid { display: none !important; }
   .m-marq { display: block; }
   .m-row { display: block; overflow: hidden; }
-  .m-track { display: flex; width: max-content; animation: mrow var(--dur, 60s) linear infinite; will-change: transform; }
-  .m-row.rev .m-track { animation-direction: reverse; }
-  .m-row:has(.tile.show) .m-track { animation-play-state: paused; }
-  @keyframes mrow { to { transform: translate3d(-50%, 0, 0); } }
+  .m-track { display: flex; width: max-content; will-change: transform; }
   .m-track .tile { flex: 0 0 66vw; aspect-ratio: 16 / 10; margin: 0; content-visibility: visible; }
   .m-track .tile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
   .m-track .tile.pan img { height: auto; bottom: auto; }
@@ -550,20 +551,20 @@ body.scrolling .work-grid { pointer-events: none; }   /* no hover effects firing
   .pgroups { padding-bottom: 0; }
   .pgroup { padding-top: 26px; }
   .pg-head { margin-bottom: 12px; }
-  /* facilities: title first, then the picture, then the text */
+  /* facilities: title and sentence first, then the picture, then the equipment list */
   .split.dark { display: flex; flex-direction: column; }
   .split.dark .body { display: contents; }
   .split.dark .body > * { padding-left: max(var(--pad), var(--gutter)); padding-right: max(var(--pad), var(--gutter-r)); margin: 0; }
   .split.dark .body > .label { order: 1; display: block; padding-top: 52px; }
   .split.dark .body > h2 { order: 2; margin-top: 10px; }
-  .split.dark .media { order: 3; width: 100%; margin-top: 26px; }
-  .split.dark .body > p { order: 4; margin-top: 22px; max-width: none !important; }
+  .split.dark .body > p { order: 3; margin-top: 18px; max-width: none !important; }   /* the sentence stays with the title */
+  .split.dark .media { order: 4; width: 100%; margin-top: 30px; }
   .split.dark .body > ul { order: 5; margin: 22px max(var(--pad), var(--gutter-r)) 0 max(var(--pad), var(--gutter)); padding: 0; }
   .split.dark .body > p:last-child { order: 6; padding-bottom: 52px; }
   /* partners: smaller logos, always moving */
   .p-track { zoom: .5 !important; }
 }
-@media (hover: none) { .partners:hover .p-track { animation-play-state: running; } }
+
 </style>
 
 <header class="site-header" id="header">
@@ -609,9 +610,9 @@ body.scrolling .work-grid { pointer-events: none; }   /* no hover effects firing
     <button class="lb-nav lb-prev" id="lbPrev" aria-label="이전 이미지">←</button>
     <button class="lb-nav lb-next" id="lbNext" aria-label="다음 이미지">→</button>
   </div>
-  <div class="lb-bot inner"><span class="label count" id="lbCount"></span><span class="label" style="color:var(--grey)">Sample visual</span></div>
+  <div class="lb-bot inner"><span class="label count" id="lbCount"></span></div>
 </div>
 
-<script src="data.js?v=20261121204920"></script>
-<script src="app.js?v=20261121204920"></script>
+<script src="data.js?v=20261121205706"></script>
+<script src="app.js?v=20261121205706"></script>
 </html>
