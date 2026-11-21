@@ -137,11 +137,11 @@
   }
   var FX_C = "rgba(195,227,251,";
   function fxDots(c, W, H, tt, mx, my) {   // About: halftone screen, bands of bigger dots drift across
-    var gap = W < 760 ? 20 : 26; c.fillStyle = FX_C + ".16)"; c.beginPath();
+    var gap = W < 760 ? 11 : 14; c.fillStyle = FX_C + ".18)"; c.beginPath();   // fine screen
     for (var y = gap / 2; y < H; y += gap) for (var x = gap / 2; x < W; x += gap) {
       var b = Math.sin((x * .6 + y) * .012 - tt * .7); b = b > 0 ? b * b * b : 0;
-      var rad = .7 + 1.9 * b, dx = x - mx, dy = y - my, d2 = dx * dx + dy * dy;
-      if (d2 < 32400) { var k = 1 - Math.sqrt(d2) / 180; rad += 3.2 * k * k; }
+      var rad = .6 + 1.5 * b, dx = x - mx, dy = y - my, d2 = dx * dx + dy * dy;
+      if (d2 < 32400) { var k = 1 - Math.sqrt(d2) / 180; rad += 2.6 * k * k; }
       c.moveTo(x + rad, y); c.arc(x, y, rad, 0, 6.2832);
     }
     c.fill();
