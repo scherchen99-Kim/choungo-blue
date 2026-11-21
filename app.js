@@ -122,6 +122,7 @@
   // slow diagonal bands of slightly bigger dots drift through (like a print screen), and dots swell a little around the pointer
   var fxHeads = [], fxT = 0, fxPtr = { x: -9999, y: -9999 };
   function fxSet(e) { fxPtr.x = e.clientX; fxPtr.y = e.clientY; }
+  window.addEventListener("pointerdown", function (e) { fxPtr.cx = e.clientX; fxPtr.cy = e.clientY; fxPtr.clk = performance.now(); }, { passive: true });
   window.addEventListener("pointermove", fxSet, { passive: true }); window.addEventListener("pointerdown", fxSet, { passive: true });
   window.addEventListener("touchmove", function (e) { var t = e.touches[0]; if (t) { fxPtr.x = t.clientX; fxPtr.y = t.clientY; } }, { passive: true });
   window.addEventListener("pointerleave", function () { fxPtr.x = fxPtr.y = -9999; });
@@ -187,32 +188,54 @@
     c.fillStyle = FX_C + ".22)"; c.fillRect(f.pad - pw / 2, py, pw, 5);
     c.fillStyle = "rgba(255,255,255,.38)"; c.beginPath(); c.arc(B.x, B.y, r, 0, 6.2832); c.fill();
   }
-  function fxPath(c, W, H, tt, mx, my, f) {   // Facilities: a CNC tool head cutting a pocket path, plus a machine crosshair with coordinates
-    if (!f.path || f.pw !== W || f.ph !== H) {
-      var pts = [], m = 36, step = 26;
-      for (var k = 0; 110 + k * step < 110 + (H - 110 - m) / 2 - 10 && m + k * step < W / 2 - 10; k++) {
-        var x0 = m + k * step, y0 = 110 + k * step, x1 = W - m - k * step, y1 = H - m - k * step;   // keep clear of the header bar
-        pts.push([x0, y0], [x1, y0], [x1, y1], [x0, y1], [x0, y0 + step]);
+  function fxPath(c, W, H, tt, mx, my, f) {   // Facilities: a target zig-zags around unpredictably; tap/click it with the crosshair to set off fireworks
+    var dt = f.last ? Math.min(.05, tt - f.last) : 0; f.last = tt;
+    var x0 = 40, x1 = W - 40, y0 = 110, y1 = H - 40;
+    function wp() { return [x0 + Math.random() * (x1 - x0), y0 + Math.random() * (y1 - y0)]; }
+    if (!f.tg || f.tw !== W || f.th !== H) { var p0 = wp(); f.tg = { x: p0[0], y: p0[1], to: wp(), sp: 220, trail: [] }; f.tw = W; f.th = H; f.parts = []; f.rings = []; f.hits = 0; f.clk = fxPtr.clk || 0; }
+    var T = f.tg;
+    // zig-zag: straight runs to random waypoints, speed changes each run, sometimes it turns early
+    var dx = T.to[0] - T.x, dy = T.to[1] - T.y, d = Math.hypot(dx, dy), stp = T.sp * dt;
+    if (d <= stp || Math.random() < dt * .6) { T.to = wp(); T.sp = 160 + Math.random() * 260; }
+    else { T.x += dx / d * stp; T.y += dy / d * stp; }
+    T.trail.push([T.x, T.y, tt]); while (T.trail.length && tt - T.trail[0][2] > 1.1) T.trail.shift();
+    // a click or tap: hit or miss
+    if (fxPtr.clk && fxPtr.clk !== f.clk) {
+      f.clk = fxPtr.clk; var cx = fxPtr.cx - f.rl, cy = fxPtr.cy - f.rt;
+      if (cx > 0 && cx < W && cy > 0 && cy < H) {
+        if (Math.hypot(cx - T.x, cy - T.y) < (W < 760 ? 30 : 24)) {
+          f.hits++; var cols = ["#ffffff", "#c3e3fb", "#095fe0", "#00a6e2", "#e4007f", "#ffe100"];
+          for (var k = 0; k < 70; k++) { var an = Math.random() * 6.2832, v = 60 + Math.random() * 320; f.parts.push({ x: T.x, y: T.y, vx: Math.cos(an) * v, vy: Math.sin(an) * v, life: .9 + Math.random() * .7, age: 0, col: cols[k % cols.length] }); }
+          f.rings.push({ x: T.x, y: T.y, t0: tt, hit: true });
+          var np = wp(); T.x = np[0]; T.y = np[1]; T.to = wp(); T.trail = [];
+        } else f.rings.push({ x: cx, y: cy, t0: tt });
       }
-      var acc = [0]; for (var q = 1; q < pts.length; q++) acc.push(acc[q - 1] + Math.hypot(pts[q][0] - pts[q - 1][0], pts[q][1] - pts[q - 1][1]));
-      f.path = pts; f.acc = acc; f.pw = W; f.ph = H;
     }
-    var P = f.path, A = f.acc, L = A[A.length - 1], s = (tt * 220 + 1500) % L, TR = 1100;
-    function at(d) { d = ((d % L) + L) % L; var q = 1; while (q < A.length - 1 && A[q] < d) q++; var u = (d - A[q - 1]) / ((A[q] - A[q - 1]) || 1); return [P[q - 1][0] + (P[q][0] - P[q - 1][0]) * u, P[q - 1][1] + (P[q][1] - P[q - 1][1]) * u]; }
+    // trail
     c.lineWidth = 1.2;
-    for (var g = 0; g < 18; g++) {   // fading trail behind the head
-      var p0 = at(s - TR + g * TR / 18), p1 = at(s - TR + (g + 1) * TR / 18);
-      c.strokeStyle = FX_C + (.03 + .42 * g / 18).toFixed(3) + ")"; c.beginPath(); c.moveTo(p0[0], p0[1]);
-      for (var h = 1; h <= 6; h++) { var pp = at(s - TR + g * TR / 18 + h * TR / 108); c.lineTo(pp[0], pp[1]); }
-      c.stroke();
+    for (var q = 1; q < T.trail.length; q++) {
+      var a = 1 - (tt - T.trail[q][2]) / 1.1; c.strokeStyle = FX_C + (.4 * a).toFixed(3) + ")";
+      c.beginPath(); c.moveTo(T.trail[q - 1][0], T.trail[q - 1][1]); c.lineTo(T.trail[q][0], T.trail[q][1]); c.stroke();
     }
-    var hd = at(s); c.fillStyle = "#ffffff"; c.beginPath(); c.arc(hd[0], hd[1], 2.6, 0, 6.2832); c.fill();
-    c.strokeStyle = "rgba(9,95,224,.5)"; c.beginPath(); c.arc(hd[0], hd[1], 9, 0, 6.2832); c.stroke();
-    if (mx > 0 && my > 0 && my < H) {
-      c.strokeStyle = FX_C + ".16)"; c.lineWidth = 1; c.beginPath(); c.moveTo(0, my); c.lineTo(W, my); c.moveTo(mx, 0); c.lineTo(mx, H); c.stroke();
-      c.fillStyle = FX_C + ".55)"; c.font = "500 10px ui-monospace, Menlo, monospace";
+    var pulse = 9 + 2 * Math.sin(tt * 8);
+    c.fillStyle = "#ffffff"; c.beginPath(); c.arc(T.x, T.y, 3, 0, 6.2832); c.fill();
+    c.strokeStyle = "rgba(9,95,224,.75)"; c.beginPath(); c.arc(T.x, T.y, pulse, 0, 6.2832); c.stroke();
+    // rings (miss = small grey ring, hit = big ring)
+    f.rings = f.rings.filter(function (r) { return tt - r.t0 < .7; });
+    f.rings.forEach(function (r) { var u = (tt - r.t0) / .7; c.strokeStyle = FX_C + ((r.hit ? .6 : .35) * (1 - u)).toFixed(3) + ")"; c.beginPath(); c.arc(r.x, r.y, (r.hit ? 70 : 18) * u + 4, 0, 6.2832); c.stroke(); });
+    // fireworks
+    f.parts = f.parts.filter(function (p) { p.age += dt; p.vx *= Math.pow(.25, dt); p.vy = p.vy * Math.pow(.25, dt) + 140 * dt; p.x += p.vx * dt; p.y += p.vy * dt; return p.age < p.life; });
+    f.parts.forEach(function (p) { c.globalAlpha = Math.max(0, 1 - p.age / p.life); c.fillStyle = p.col; c.fillRect(p.x - 1.5, p.y - 1.5, 3, 3); });
+    c.globalAlpha = 1;
+    // crosshair with machine coordinates
+    c.font = "500 10px ui-monospace, Menlo, monospace";
+    if (f.hits) { c.fillStyle = FX_C + ".5)"; c.fillText("HIT " + String(f.hits).padStart(2, "0"), W - 64, H - 18); }
+    if (mx > 0 && my > 0 && mx < W && my < H) {
+      c.strokeStyle = FX_C + ".2)"; c.lineWidth = 1; c.beginPath(); c.moveTo(0, my); c.lineTo(W, my); c.moveTo(mx, 0); c.lineTo(mx, H); c.stroke();
+      c.strokeStyle = FX_C + ".45)"; c.beginPath(); c.arc(mx, my, 12, 0, 6.2832); c.stroke();
+      c.fillStyle = FX_C + ".55)";
       var lab = "X " + (mx / 2).toFixed(1).padStart(6, "0") + "   Y " + (my / 2).toFixed(1).padStart(6, "0"), tw = c.measureText(lab).width;
-      c.fillText(lab, mx + 10 + tw > W - 8 ? mx - 10 - tw : mx + 10, my - 10);   // flips to the left near the right edge
+      c.fillText(lab, mx + 10 + tw > W - 8 ? mx - 10 - tw : mx + 10, my - 10);
     }
   }
   function fxWave(c, W, H, tt, mx, my) {   // Contact: soft voice-like lines that swell where the pointer is
@@ -237,6 +260,7 @@
       if (f.w !== W || f.h !== H) { f.w = W; f.h = H; f.cv.width = W * dpr; f.cv.height = H * dpr; }
       var c = f.ctx; c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, W, H);
       var mx = fxPtr.x - r.left, my = fxPtr.y - r.top, kind = sec.getAttribute("data-fx");
+      f.rl = r.left; f.rt = r.top;
       if (kind === "grid") fxGrid(c, W, H, tt, mx, my, f);
       else if (kind === "path") fxPath(c, W, H, tt, mx, my, f);
       else if (kind === "wave") fxWave(c, W, H, tt, mx, my);
