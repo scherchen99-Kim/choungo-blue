@@ -196,17 +196,18 @@
     var T = f.tg;
     // zig-zag: straight runs to random waypoints, speed changes each run, sometimes it turns early
     var dx = T.to[0] - T.x, dy = T.to[1] - T.y, d = Math.hypot(dx, dy), stp = T.sp * dt;
-    if (d <= stp || Math.random() < dt * .6) { T.to = wp(); T.sp = 160 + Math.random() * 260; }
+    if (d <= stp || Math.random() < dt * .3) { T.to = wp(); T.sp = 90 + Math.random() * 130; }   // easier: slower, fewer sudden turns
     else { T.x += dx / d * stp; T.y += dy / d * stp; }
     T.trail.push([T.x, T.y, tt]); while (T.trail.length && tt - T.trail[0][2] > 1.1) T.trail.shift();
     // a click or tap: hit or miss
     if (fxPtr.clk && fxPtr.clk !== f.clk) {
       f.clk = fxPtr.clk; var cx = fxPtr.cx - f.rl, cy = fxPtr.cy - f.rt;
       if (cx > 0 && cx < W && cy > 0 && cy < H) {
-        if (Math.hypot(cx - T.x, cy - T.y) < (W < 760 ? 30 : 24)) {
+        if (Math.hypot(cx - T.x, cy - T.y) < (W < 760 ? 46 : 40)) {
           f.hits++; var cols = ["#ffffff", "#c3e3fb", "#095fe0", "#00a6e2", "#e4007f", "#ffe100"];
           for (var k = 0; k < 70; k++) { var an = Math.random() * 6.2832, v = 60 + Math.random() * 320; f.parts.push({ x: T.x, y: T.y, vx: Math.cos(an) * v, vy: Math.sin(an) * v, life: .9 + Math.random() * .7, age: 0, col: cols[k % cols.length] }); }
           f.rings.push({ x: T.x, y: T.y, t0: tt, hit: true });
+          if (f.hits === 20 && f.sec) { var h1 = f.sec.querySelector('h1'); if (h1 && !h1.querySelector('.fx-win')) h1.insertAdjacentHTML('beforeend', '<span class="fx-win">WIN!</span>'); }   // 20 hits: WIN! next to FLOOR.
           var np = wp(); T.x = np[0]; T.y = np[1]; T.to = wp(); T.trail = [];
         } else f.rings.push({ x: cx, y: cy, t0: tt });
       }
@@ -260,7 +261,7 @@
       if (f.w !== W || f.h !== H) { f.w = W; f.h = H; f.cv.width = W * dpr; f.cv.height = H * dpr; }
       var c = f.ctx; c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, W, H);
       var mx = fxPtr.x - r.left, my = fxPtr.y - r.top, kind = sec.getAttribute("data-fx");
-      f.rl = r.left; f.rt = r.top;
+      f.rl = r.left; f.rt = r.top; f.sec = sec;
       if (kind === "grid") fxGrid(c, W, H, tt, mx, my, f);
       else if (kind === "path") fxPath(c, W, H, tt, mx, my, f);
       else if (kind === "wave") fxWave(c, W, H, tt, mx, my);
