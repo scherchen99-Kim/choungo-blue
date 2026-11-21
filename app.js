@@ -70,8 +70,8 @@
     homeShown = Math.min(16, homeOrder.length);
     var spotPool = D.projects.filter(function (p) { return p.images.length >= 3; });
     var spot = spotPool[Math.floor(Math.random() * spotPool.length)] || D.projects[0];
-    var steps = STEPS.map(function (s, i) {
-      return '<li><span class="no">' + pad(i + 1) + '</span><span class="nm">' + esc(s[0]) + '</span><i></i></li>';
+    var steps = ["Planning", "Design", "Print & Production", "Finishing"].map(function (s, i) {
+      return '<li><span class="no">' + pad(i + 1) + '</span><span class="nm">' + esc(s) + '</span><i></i></li>';
     }).join("");
 
     return '' +
@@ -172,7 +172,7 @@
     var stepEls = document.querySelectorAll("#heroSteps li");
     var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     var W = 0, H = 0, dpr = 1, size = 100, pad = 24, groups = [], sparks = [];
-    var LOOP = 7.5, cbT0 = performance.now(), cbMark = null, cbTxt = null, cbCh = 0, cbPrev = -1, cbG = [], cbK = 0;
+    var LOOP = 7, cbT0 = performance.now(), cbMark = null, cbTxt = null, cbCh = 0, cbPrev = -1, cbG = [], cbK = 0;
     // timeline (seconds)
     var T = { grid: [0, .8], aS: [.5, 2.3], aP: [2.2, 3.6], bS: [3.3, 4.7], bL: [4.6, 6.6], fade: [8.8, 10.5] };
     var STEP_T = [0, .5, 2.2, 3.6, 6.6, 9.6];
@@ -196,7 +196,7 @@
       pad = Math.max(16, Math.min(56, W * 0.04));
       var narrow = W < 720;
       // headline chapters (one per cycle): [line A words, line B words]
-      var CH = [[["DESIGNED", "HERE."], ["BUILT", "HERE."]], [["FROM", "IDEA"], ["TO", "IN-STORE."]], [["ONE", "TEAM."], ["ONE", "STOP."]]];
+      var CH = [[["PLAN", "IT"], ["RIGHT."]], [["DESIGN", "IT"], ["BOLD."]], [["PRINT", "IT"], ["PERFECT."]], [["FINISH", "IT"], ["SHARP."]]];
       function ln(w) { return narrow ? w : [w.join(" ")]; }
       var A = ln(CH[cbCh][0]), B = ln(CH[cbCh][1]);
       setFont(100);
@@ -301,52 +301,132 @@
       homes.forEach(function (hx) { emit(sec, tH + .6, 4.5, at(hx, cy), .9); });
       var fadeOut = 1 - prog(t, T.fade);
       ctx.globalAlpha = 1;
-      // headline never fades: each chapter change is a tool pass that swaps old text for new
-      //   line A: screen-print squeegee pulls new ink across;  line B: laser head cuts the old letters away and leaves the new
-      var cur = cbG[cbCh], prv = cbPrev >= 0 ? cbG[cbPrev] : null;
-      // tools never leave: they rest at the end of the line, then sweep back the other way to set the next chapter
-      function swap(gi, p0, p1, kind) {
-        var gN = cur[gi], gO = prv ? prv[gi] : null;
-        var L = pad - 22, eN = pad + gN.width + 18, eO = gO ? pad + gO.width + 18 : L, eM = Math.max(eN, eO);
-        var dir = cbK % 2 === 0 ? 1 : -1, x, sweeping = false;
-        if (dir === 1) {
-          if (t < p0) x = L;
-          else if (t < p1) { x = L + (eM - L) * ease(prog(t, [p0, p1])); sweeping = true; }
-          else x = eM + (eN - eM) * ease(prog(t, [p1, p1 + .5])); // settle exactly at the end of the new line
+      // headline: four chapters, one tool each — no fades, the tool itself replaces the words
+      //   0 planning: a typing caret deletes the old copy and types the new one
+      //   1 design:   old copy is selected and deleted, the pen tool draws outlines with anchor points, then the fill pours in
+      //   2 print:    a screen-print squeegee pulls the new ink across
+      //   3 finish:   a laser head cuts the old letters away and leaves the new
+      var cur = cbG[cbCh], prv = cbPrev >= 0 ? cbG[cbPrev] : null, WHITE = "#ffffff", CYAN = "#7fd3ff";
+      function linesOf(g) { return g ? g[0].lines.concat(g[1].lines) : []; }
+      function clipX(g, x0, x1) { ctx.save(); ctx.beginPath(); ctx.rect(x0, 0, x1 - x0, H); ctx.clip(); drawText(g, "fill", WHITE); ctx.restore(); }
+      function both(fn) { fn(cur[0], 0); fn(cur[1], 1); }
+      var kind = cbCh;
+      if (kind === 0) {
+        setFont(size); ctx.fillStyle = WHITE;
+        var Ln = linesOf(cur), Lo = linesOf(prv), del = prog(t, [.2, .9]), typ = prog(t, [1.0, 3.0]);
+        var caret = null;
+        if (t < 1.0 && Lo.length) {           // backspace the old copy from the end
+          var tot = 0; Lo.forEach(function (l) { tot += l.text.length; });
+          var keep = Math.round(tot * (1 - del));
+          Lo.forEach(function (l) { var n = Math.max(0, Math.min(l.text.length, keep)); keep -= l.text.length;
+            var tx = l.text.slice(0, n); ctx.fillText(tx, pad, l.y); if (n > 0 || !caret) caret = { x: pad + ctx.measureText(tx).width, y: l.y }; });
+          if (del >= 1) caret = { x: pad, y: Lo[0].y };
+        } else {                               // type the new copy
+          var totN = 0; Ln.forEach(function (l) { totN += l.text.length; });
+          var shown = Math.floor(totN * typ);
+          Ln.forEach(function (l) { var n = Math.max(0, Math.min(l.text.length, shown)); shown -= l.text.length;
+            var tx = l.text.slice(0, n); ctx.fillText(tx, pad, l.y); if (n > 0 || !caret) caret = { x: pad + ctx.measureText(tx).width, y: l.y }; });
+        }
+        if (caret && (t < 3.0 || Math.sin(t * 6) > 0)) { ctx.fillStyle = CYAN; ctx.fillRect(caret.x + size * .04, caret.y - size * .78, Math.max(3, size * .05), size * .84); }
+      } else if (kind === 1) {
+        // design: one cursor. arrow selects the old copy and drags the corner to enlarge it,
+        // then it turns into the pen tool, draws the new outlines with anchor points, the fill pours in and a colour sheen passes
+        function arrow(x, y) { ctx.save(); ctx.translate(x, y); ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, 22); ctx.lineTo(6, 16); ctx.lineTo(10, 25); ctx.lineTo(14, 23); ctx.lineTo(10, 15); ctx.lineTo(17, 15); ctx.closePath(); ctx.fillStyle = "#fff"; ctx.fill(); ctx.lineWidth = 1.4; ctx.strokeStyle = "#0c2340"; ctx.stroke(); ctx.restore(); }
+        function penIcon(x, y) { ctx.save(); ctx.translate(x, y); ctx.rotate(-Math.PI / 4); ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-7, 12); ctx.lineTo(-5, 22); ctx.lineTo(5, 22); ctx.lineTo(7, 12); ctx.closePath(); ctx.fillStyle = "#fff"; ctx.fill(); ctx.lineWidth = 1.4; ctx.strokeStyle = "#0c2340"; ctx.stroke(); ctx.beginPath(); ctx.arc(0, 11, 2, 0, Math.PI * 2); ctx.fillStyle = "#0c2340"; ctx.fill(); ctx.fillStyle = "#fff"; ctx.strokeStyle = "#0c2340"; ctx.fillRect(-6, 22, 12, 6); ctx.strokeRect(-6, 22, 12, 6); ctx.restore(); }
+        function handles(x0, y0, x1, y1) {
+          ctx.strokeStyle = CYAN; ctx.lineWidth = 1.5; ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
+          ctx.fillStyle = "#fff"; [[x0, y0], [x1, y0], [x0, y1], [x1, y1], [(x0 + x1) / 2, y0], [(x0 + x1) / 2, y1], [x0, (y0 + y1) / 2], [x1, (y0 + y1) / 2]].forEach(function (p) { ctx.fillRect(p[0] - 4, p[1] - 4, 8, 8); ctx.strokeRect(p[0] - 4, p[1] - 4, 8, 8); });
+        }
+        // one continuous edit: marquee-drag from the bottom corner selects the old copy -> it shows as editable outlines ->
+        // the pen tool walks each line turning old outlines into new ones -> the fill pours in (outline stays, so weight doesn't jump)
+        var T_IN = .3, T_DRAG = 1.2, T_SELD = 1.5, T_A = 2.6, T_B = 3.7, T_FILL = 4.6;
+        var lw = Math.max(1.2, size / 90);
+        function anchorsFor(g, x0, x1) {
+          ctx.fillStyle = "#fff"; ctx.strokeStyle = CYAN; ctx.lineWidth = 1.5;
+          var step = Math.max(40, size * .55);
+          for (var ax = pad; ax <= pad + g.width; ax += step) { if (ax < x0 || ax > x1) continue; [g.top + size * .1, g.bottom - size * .02].forEach(function (ay) { ctx.fillRect(ax - 3.5, ay - 3.5, 7, 7); ctx.strokeRect(ax - 3.5, ay - 3.5, 7, 7); }); }
+        }
+        function outline(g, x0, x1) { ctx.save(); ctx.beginPath(); ctx.rect(x0, 0, x1 - x0, H); ctx.clip(); ctx.lineWidth = lw; ctx.strokeStyle = WHITE; drawText(g, "stroke"); ctx.restore(); }
+        var gx0 = pad, gy0 = cur[0].top, gx1 = pad + Math.max(cur[0].width, cur[1].width, prv ? prv[0].width : 0, prv ? prv[1].width : 0), gy1 = cur[1].bottom;
+        var sx0 = gx1 + 30, sy0 = gy1 + 30;
+        if (t < T_SELD) {
+          if (prv) { drawText(prv[0], "fill", WHITE); drawText(prv[1], "fill", WHITE); }
+          var dp = ease(prog(t, [T_IN, T_DRAG])), cxp = sx0 + (gx0 - 20 - sx0) * dp, cyp = sy0 + (gy0 - 20 - sy0) * dp;
+          if (t > T_IN && t < T_DRAG) { ctx.fillStyle = "rgba(127,211,255,.12)"; ctx.fillRect(cxp, cyp, sx0 - cxp, sy0 - cyp); ctx.setLineDash([5, 4]); ctx.strokeStyle = CYAN; ctx.lineWidth = 1; ctx.strokeRect(cxp, cyp, sx0 - cxp, sy0 - cyp); ctx.setLineDash([]); }
+          if (t >= T_DRAG) handles(gx0 - 8, gy0 - 8, gx1 + 8, gy1 + 8);
+          var mv = ease(prog(t, [0, T_IN]));
+          arrow(t < T_IN ? W * .7 + (sx0 - W * .7) * mv : cxp, t < T_IN ? H * .95 + (sy0 - H * .95) * mv : cyp);
         } else {
-          if (t < p0) x = eO + (eM - eO) * ease(prog(t, [p0 - .45, p0]));
-          else if (t < p1) { x = eM + (L - eM) * ease(prog(t, [p0, p1])); sweeping = true; }
-          else x = L;
+          var penX = null, penY = null, pf = ease(prog(t, [T_B + .1, T_FILL]));
+          [[0, T_SELD, T_A], [1, T_A, T_B]].forEach(function (d) {
+            var gi = d[0], gN = cur[gi], gO = prv ? prv[gi] : null, pp = ease(prog(t, [d[1], d[2]]));
+            var end = pad + Math.max(gN.width, gO ? gO.width : 0) + 6, ox = pad - 6 + (end - pad + 6) * pp;
+            var fx = pf > 0 ? pad + (gN.width + 6) * pf : 0;
+            outline(gN, fx, ox);                        // behind the pen: new paths (the fill replaces them, so the weight never changes)
+            if (gO && pp < 1) outline(gO, ox, W);       // ahead of the pen: old paths still to edit
+            if (pf > 0) clipX(gN, 0, pad + (gN.width + 6) * pf);
+            if (pf < 1) anchorsFor(gN, pad + (gN.width + 6) * pf, ox);
+            if (gO && pp < 1) anchorsFor(gO, ox, W);
+            if (pp > 0 && pp < 1) { penX = ox; penY = gN.top + (gN.bottom - gN.top) * (.5 + .35 * Math.sin(t * 9)); }
+          });
+          if (penX !== null) penIcon(penX, penY);
         }
-        // text: new on the side the tool has passed, old on the side it has not
-        if (t < p0) { if (gO) drawText(gO, "fill", "#ffffff"); }
-        else if (t >= p1) drawText(gN, "fill", "#ffffff");
-        else {
-          ctx.save(); ctx.beginPath(); if (dir === 1) ctx.rect(0, 0, x, H); else ctx.rect(x, 0, W - x, H); ctx.clip(); drawText(gN, "fill", "#ffffff"); ctx.restore();
-          if (gO) { ctx.save(); ctx.beginPath(); if (dir === 1) ctx.rect(x, 0, W - x, H); else ctx.rect(0, 0, x, H); ctx.clip(); drawText(gO, "fill", "#ffffff"); ctx.restore(); }
-        }
-        var top = gN.top - size * .1, bot = gN.bottom + size * .12;
-        if (kind === "print") {
-          if (sweeping) {
-            var tail = 110 * dir, gr = ctx.createLinearGradient(x - tail, 0, x, 0);
-            gr.addColorStop(0, "rgba(255,255,255,0)"); gr.addColorStop(1, "rgba(255,255,255,.22)");
-            ctx.fillStyle = gr; ctx.fillRect(Math.min(x, x - tail), top, Math.abs(tail), bot - top);
-            CMYK.forEach(function (c, i) { ctx.fillStyle = c; ctx.fillRect(x + dir * i * 4 - (dir < 0 ? 3 : 0), top, 3, bot - top); });
+      } else {
+        var A0 = cur[0], B0 = cur[1], O0 = prv ? prv[0] : null, O1 = prv ? prv[1] : null;
+        if (kind === 2) {
+          // print: the screen holds the new copy as a pale stencil; one slow squeegee pull leaves solid ink behind it
+          var L = pad - 26, eM = pad + Math.max(A0.width, B0.width, O0 ? O0.width : 0, O1 ? O1.width : 0) + 26;
+          var vS = (eM - L) / 3.1, x = t < .5 ? L : L + vS * (t - .5), sweeping = t > .5 && x < W + 50;   // one steady speed, straight off the screen
+          var top = A0.top + size * .04, bot = B0.bottom - size * .02;
+          var STENCIL = "rgba(255,255,255,.2)";
+          if (t < .5 && prv) both(function (g, i) { drawText(prv[i], "fill", WHITE); });
+          else if (x >= eM) both(function (g) { drawText(g, "fill", WHITE); });
+          else {
+            both(function (g) { clipX(g, 0, x); });
+            both(function (g) { ctx.save(); ctx.beginPath(); ctx.rect(x, 0, W - x, H); ctx.clip(); drawText(g, "fill", STENCIL); ctx.restore(); });
           }
-          ctx.fillStyle = "rgba(230,236,245,.9)"; ctx.fillRect(x - 1.5, top, 3, bot - top);
+          if (sweeping) {
+            var gr = ctx.createLinearGradient(x - 120, 0, x, 0);
+            gr.addColorStop(0, "rgba(255,255,255,0)"); gr.addColorStop(1, "rgba(255,255,255,.18)");
+            ctx.fillStyle = gr; ctx.fillRect(x - 120, top, 120, bot - top);
+            CMYK.forEach(function (c, i) { ctx.fillStyle = c; ctx.fillRect(x + i * 4, top, 3, bot - top); });
+            ctx.fillStyle = "#e6e9ef"; ctx.fillRect(x - 2, top - 10, 22, 10); ctx.fillRect(x - 2, bot, 22, 10);   // squeegee holder, top and bottom
+            ctx.fillStyle = "rgba(230,236,245,.9)"; ctx.fillRect(x + 17, top, 3, bot - top);
+          }
         } else {
-          ctx.strokeStyle = "rgba(200,235,255,.45)"; ctx.lineWidth = 1;
-          ctx.beginPath(); ctx.moveTo(x, top); ctx.lineTo(x, bot); ctx.stroke();
-          var ly = sweeping ? top + (bot - top) * (0.5 + 0.46 * Math.sin(t * 36)) : (top + bot) / 2;
-          var rg = sweeping ? 30 : 9 + 2 * Math.sin(t * 3);
-          var glow = ctx.createRadialGradient(x, ly, 0, x, ly, rg);
-          glow.addColorStop(0, "rgba(255,255,255,1)"); glow.addColorStop(.25, "rgba(150,220,255,.8)"); glow.addColorStop(1, "rgba(150,220,255,0)");
-          ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(x, ly, rg, 0, Math.PI * 2); ctx.fill();
-          if (sweeping && !reduce) for (var k = 0; k < 3; k++) sparks.push({ x: x, y: ly, vx: (Math.random() - .5 - .2 * dir) * 260, vy: -Math.random() * 220 - 40, life: .5 + Math.random() * .4, age: 0 });
+          // finishing: the laser works letter by letter; each letter is revealed from the real line once its outline is cut
+          setFont(size);
+          var letters = [];
+          [A0, B0].forEach(function (g, gi) { g.lines.forEach(function (l) {
+            for (var c = 0; c < l.text.length; c++) { if (l.text[c] === " ") continue;
+              var x0 = pad + ctx.measureText(l.text.slice(0, c)).width, x1 = pad + ctx.measureText(l.text.slice(0, c + 1)).width;
+              letters.push({ x0: x0, x1: x1, line: l, gi: gi }); } }); });
+          var T0 = .3, T1 = 3.6, per = (T1 - T0) / letters.length, at = (t - T0) / per, idx = t < T0 ? -1 : Math.min(letters.length, Math.floor(at)), lp = at - Math.floor(at);
+          var cut = [pad - 40, pad - 40];
+          for (var i = 0; i < idx; i++) cut[letters[i].gi] = Math.max(cut[letters[i].gi], letters[i].x1);
+          var finished = idx >= letters.length;
+          [A0, B0].forEach(function (g, gi) {
+            if (finished) { drawText(g, "fill", WHITE); return; }
+            clipX(g, 0, cut[gi]);                                  // cut letters: new copy
+            if (t >= T0 || !prv) {                                  // not yet reached: faint cutting path of the new letters
+              ctx.save(); ctx.beginPath(); ctx.rect(cut[gi], 0, W, H); ctx.clip(); ctx.lineWidth = Math.max(1, size / 110); ctx.strokeStyle = "rgba(255,255,255,.28)"; drawText(g, "stroke"); ctx.restore();
+            } else clipX(prv[gi], 0, W);
+          });
+          if (idx >= 0 && !finished) {
+            var lt = letters[idx], bx = lt.x0, bw = lt.x1 - lt.x0, by = lt.line.y - size * .74, bh = size * .74;
+            ctx.save(); ctx.beginPath(); ctx.rect(bx - 2, 0, bw + 4, H); ctx.clip();   // glowing outline of the letter being cut
+            ctx.lineWidth = Math.max(1.5, size / 70); ctx.strokeStyle = "rgba(255,240,200," + (.35 + .6 * lp) + ")";
+            var g0 = lt.gi === 0 ? A0 : B0; drawText(g0, "stroke"); ctx.restore();
+            var per2 = 2 * (bw + bh), d = per2 * lp, hx, hy;
+            if (d < bw) { hx = bx + d; hy = by; } else if (d < bw + bh) { hx = bx + bw; hy = by + d - bw; } else if (d < 2 * bw + bh) { hx = bx + bw - (d - bw - bh); hy = by + bh; } else { hx = bx; hy = by + bh - (d - 2 * bw - bh); }
+            var glow = ctx.createRadialGradient(hx, hy, 0, hx, hy, 26);
+            glow.addColorStop(0, "rgba(255,255,255,1)"); glow.addColorStop(.25, "rgba(150,220,255,.8)"); glow.addColorStop(1, "rgba(150,220,255,0)");
+            ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(hx, hy, 26, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = "rgba(200,235,255,.4)"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(hx, 0); ctx.lineTo(hx, hy); ctx.stroke();
+            if (!reduce) for (var k = 0; k < 2; k++) sparks.push({ x: hx, y: hy, vx: (Math.random() - .5) * 240, vy: -Math.random() * 200 - 30, life: .4 + Math.random() * .4, age: 0 });
+          }
         }
       }
-      swap(0, .5, 1.9, "print");
-      swap(1, 1.3, 2.9, "laser");
     }
     function drawSparks(dt) {
       for (var i = sparks.length - 1; i >= 0; i--) {
@@ -359,19 +439,18 @@
       }
     }
     function setSteps(t) {
-      stepEls.forEach(function (li, i) {
-        var a = STEP_T[i], b = STEP_T[i + 1];
-        li.classList.toggle("on", t >= a && t < b);
-        li.classList.toggle("done", t >= b);
-        li.querySelector("i").style.transform = "scaleX(" + clamp((t - a) / (b - a)) + ")";
+      stepEls.forEach(function (li, i) {   // the step bar follows the chapter (planning / design / print / finishing)
+        li.classList.toggle("on", i === cbCh);
+        li.classList.toggle("done", i < cbCh);
+        li.querySelector("i").style.transform = "scaleX(" + (i < cbCh ? 1 : i === cbCh ? clamp(t / LOOP) : 0) + ")";
       });
     }
     var start = performance.now(), last = start;
     function loop(now) {
       var t = ((now - start) / 1000) % LOOP, dt = Math.min(.05, (now - last) / 1000); last = now;
       var k = Math.floor(Math.max(0, now - start) / 1000 / LOOP);
-      cbK = k; cbCh = k % 3; cbPrev = k > 0 ? (k - 1) % 3 : -1; groups = cbG[cbCh];
-      frame(t); drawSparks(dt); setSteps(t / LOOP * 10.5);
+      cbK = k; cbCh = k % 4; cbPrev = k > 0 ? (k - 1) % 4 : -1; groups = cbG[cbCh];
+      frame(t); drawSparks(dt); setSteps(t);
       heroRAF = requestAnimationFrame(loop);
     }
     function onResize() { layout(); if (reduce) { frame(8); setSteps(9.5); } }
