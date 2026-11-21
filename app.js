@@ -819,7 +819,6 @@
       '<h1 class="display" style="margin-top:20px">Production<br>floor.</h1>' +
       '<div class="row"><span></span><p>디자인 스튜디오와 함께 자체 제작센터를 운영합니다. 인쇄, 가공, 조립을 직접 하기 때문에 샘플 확인이 빠르고, 디자인 의도를 양산 단계까지 지킬 수 있습니다.</p></div>' +
     '</section>' +
-    '<div class="fac-band">' + slot("img/fac/facilities-top.jpg", "facilities-top.jpg", "2400 × 1050", "제작센터") + '</div>' +
     '<section class="fac-wrap">' + D.facilities.map(function (f, i) {
       return '<article class="fac">' +
         (f.image ? '<button type="button" class="media" data-i="' + i + '" aria-label="' + esc(f.nameKo) + ' 이미지 확대"><img src="' + f.image + '" alt="' + esc(f.nameKo) + '"></button>' : '<div class="media">' + slot("", "fac-" + f.id + ".jpg", "1600 × 1000", f.nameKo) + '</div>') +
