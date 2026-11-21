@@ -266,10 +266,10 @@
           f.hits++; var cols = ["#ffffff", "#c3e3fb", "#095fe0", "#00a6e2", "#e4007f", "#ffe100"];
           for (var k = 0; k < 70; k++) { var an = Math.random() * 6.2832, v = 60 + Math.random() * 320; f.parts.push({ x: T.x, y: T.y, vx: Math.cos(an) * v, vy: Math.sin(an) * v, life: .9 + Math.random() * .7, age: 0, col: cols[k % cols.length] }); }
           f.rings.push({ x: T.x, y: T.y, t0: tt, hit: true });
-          if (f.hits === 20 && f.sec) {   // 20 hits: "Production floor." turns into "Production wins."
+          if (f.hits === 20 && f.sec) {   // 20 hits: "Production floor." turns into "Production complete!"
             var sw = f.sec.querySelector('.fx-swap');
             if (sw && !sw.classList.contains('won')) {
-              sw.classList.add('out'); setTimeout(function () { sw.textContent = 'wins.'; sw.classList.remove('out'); sw.classList.add('won'); }, 260);
+              sw.classList.add('out'); setTimeout(function () { sw.textContent = 'complete!'; sw.classList.remove('out'); sw.classList.add('won'); }, 260);
               setTimeout(function () {   // 6 seconds later: softly back to "Production floor." and a fresh round
                 sw.classList.add('out');
                 setTimeout(function () { sw.textContent = 'floor.'; sw.classList.remove('won'); void sw.offsetWidth; sw.classList.remove('out'); f.hits = 0; }, 450);
