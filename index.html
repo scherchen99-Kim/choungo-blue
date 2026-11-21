@@ -201,7 +201,7 @@ p { margin: 0; }
 .btn-solid:hover { background: var(--blue); }
 
 /* ---------- Partners ---------- */
-.partners { background: var(--white); color: var(--black); padding-block: clamp(56px, 7vw, 96px); overflow: hidden; border-top: 1px solid var(--line); text-align: center; }
+.partners { background: var(--white); color: var(--black); padding-block: clamp(56px, 7vw, 96px); overflow: hidden; border-top: 1px solid var(--line); }
 .partners .label { color: var(--blue); }
 .partners h2 { font-family: var(--display); font-weight: 850; font-stretch: 75%; text-transform: uppercase; font-size: clamp(32px, 4vw, 60px); line-height: 1; margin-top: 12px; }
 .p-track { display: flex; gap: clamp(40px, 6vw, 88px); width: max-content; margin-top: clamp(32px, 4vw, 56px); animation: pmarq 40s linear infinite; }
@@ -395,17 +395,6 @@ form.brief { display: grid; gap: 28px; }
 .site-footer { background: #000055; }
 .dark { --grey: rgba(255,255,255,.72); }
 .dark p, .dark .body p, .dark .eq-list li span:last-child, .dark .svc p, .dark .stat-strip p { color: rgba(255,255,255,.8) !important; }
-/* ---------- every section title centred ---------- */
-.sec-head { flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 18px; }
-.sec-head .label { margin-bottom: 14px; }
-.intro { grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; }
-.intro .copy { margin: 0 auto; justify-items: center; }
-.section.paper > .label, .process-title { text-align: center; }
-.page-head > .label, .page-head h1 { display: block; text-align: center; }
-.page-head .row { grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; }
-.page-head .row p { max-width: 620px; }
-.split .body { align-items: center; text-align: center; }
-.split .body .eq-list { width: 100%; text-align: left; }
 /* ---------- facility images follow the list order ---------- */
 .fac-rot img { opacity: 0; transition: opacity .8s ease; }
 .fac-rot img.on { opacity: 1; }
@@ -457,6 +446,18 @@ form.brief { display: grid; gap: 28px; }
   .logo-word { font-size: 19px; }
   .logo-desc { font-size: 7.5px; letter-spacing: .26em; }
   .logo { gap: 4px; }
+}
+/* ---------- phones: equipment as swipeable cards, short text ---------- */
+@media (max-width: 760px) {
+  .fac-wrap { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 12px; padding: 28px 16px 36px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .fac-wrap::-webkit-scrollbar { display: none; }
+  .fac-wrap .fac, .fac-wrap .fac:nth-child(even) { flex: 0 0 84vw; scroll-snap-align: center; grid-template-columns: 1fr !important; border: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .fac-wrap .fac:nth-child(even) .media { order: 0; }
+  .fac-wrap .fac .media img { aspect-ratio: 4 / 3; }
+  .fac-wrap .fac .body { padding: 18px 16px 20px !important; gap: 8px; }
+  .fac-wrap .fac h2 { font-size: 24px; }
+  .fac-wrap .fac p { font-size: 13.5px; line-height: 1.6; }
+  .fac-wrap .specs, .fac-wrap .spec-note { display: none; }
 }
 /* ---------- touch screens: no hover, so the title sits on a solid strip and the photo stays clear ---------- */
 @media (hover: none) {
@@ -528,6 +529,6 @@ form.brief { display: grid; gap: 28px; }
   <div class="lb-bot inner"><span class="label count" id="lbCount"></span><span class="label" style="color:var(--grey)">Sample visual</span></div>
 </div>
 
-<script src="data.js?v=20261121144840"></script>
-<script src="app.js?v=20261121144840"></script>
+<script src="data.js?v=20261121145009"></script>
+<script src="app.js?v=20261121145009"></script>
 </html>

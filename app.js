@@ -124,7 +124,7 @@
     '</section>' +
 
     '<section class="section inner">' +
-      '<span class="label" style="color:var(--grey);display:block;margin-bottom:20px;text-align:center">How we work</span>' +
+      '<span class="label" style="color:var(--grey);display:block;margin-bottom:20px">How we work</span>' +
       '<h2 class="display process-title">One-stop<span>creative production.</span></h2>' +
       '<ol class="steps">' + STEPS.map(function (s, i) {
         return '<li><span class="no">' + pad(i + 1) + '</span><h3>' + esc(s[0]) + '</h3><p>' + esc(s[1]) + '</p></li>';
@@ -493,7 +493,7 @@
       }).join("") + '</div>' +
     '</section>' +
     '<section class="section paper inner">' +
-      '<span class="label" style="color:var(--grey);display:block;margin-bottom:20px;text-align:center">Process</span>' +
+      '<span class="label" style="color:var(--grey);display:block;margin-bottom:20px">Process</span>' +
       '<h2 class="display process-title">From idea<span>to in-store.</span></h2>' +
       '<ol class="steps">' + STEPS.map(function (s, i) {
         return '<li><span class="no">' + pad(i + 1) + '</span><h3>' + esc(s[0]) + '</h3><p>' + esc(s[1]) + '</p></li>';
@@ -599,7 +599,7 @@
       '<div class="row"><span></span><p>디자인 스튜디오와 함께 자체 제작센터를 운영합니다. 인쇄, 가공, 조립을 직접 하기 때문에 샘플 확인이 빠르고, 디자인 의도를 양산 단계까지 지킬 수 있습니다.</p></div>' +
     '</section>' +
     '<div class="fac-band">' + slot("img/fac/facilities-top.jpg", "facilities-top.jpg", "2400 × 1050", "제작센터") + '</div>' +
-    '<section>' + D.facilities.map(function (f, i) {
+    '<section class="fac-wrap">' + D.facilities.map(function (f, i) {
       return '<article class="fac">' +
         (f.image ? '<button type="button" class="media" data-i="' + i + '" aria-label="' + esc(f.nameKo) + ' 이미지 확대"><img src="' + f.image + '" alt="' + esc(f.nameKo) + '"></button>' : '<div class="media">' + slot("", "fac-" + f.id + ".jpg", "1600 × 1000", f.nameKo) + '</div>') +
         '<div class="body"><span class="label no">' + pad(i + 1) + ' / ' + pad(D.facilities.length) + '</span>' +
