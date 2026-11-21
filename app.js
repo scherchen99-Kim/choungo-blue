@@ -57,8 +57,8 @@
       '<div class="inner">' +
       '<div class="foot-contact">' +
         '<div><span class="label">Telephone</span><span class="v">' + esc(c.phone) + '</span></div>' +
-        '<div><span class="label">Studio & Factory</span><span class="v">SEOUL — PAJU</span></div>' +
-        '<div><span class="label">Email</span><span class="v">' + esc(c.email.toUpperCase()) + '</span></div>' +
+        '<div><span class="label">Fax</span><span class="v">' + esc(c.fax) + '</span></div>' +
+        '<div><span class="label">Studio & Factory</span><span class="v" style="font-family:var(--body);font-weight:500">' + esc(c.address) + '</span></div>' +
       '</div>' +
       '<div class="foot-bottom"><span class="logo"><span class="logo-word" style="font-size:16px">CHOUNGO <b>BLUE</b></span></span>' +
         '<span>로고는 임시안입니다.</span>' +
@@ -630,6 +630,7 @@
     '<section class="section inner"><div class="contact-grid">' +
       '<div class="contact-info"><p style="font-size:18px;max-width:420px">프로젝트 개요와 일정, 예상 수량을 알려주시면 영업일 기준 1–2일 안에 담당자가 연락드립니다.</p>' +
         '<dl><div><dt class="label">Telephone</dt><dd>' + esc(c.phone) + '</dd></div>' +
+        '<div><dt class="label">Fax</dt><dd>' + esc(c.fax) + '</dd></div>' +
         '<div><dt class="label">Email</dt><dd>' + esc(c.email) + '</dd></div>' +
         '<div><dt class="label">Studio & Factory</dt><dd class="ko">' + esc(c.address) + '</dd></div>' +
         '<div><dt class="label">Hours</dt><dd class="ko">' + esc(c.hours) + '</dd></div></dl></div>' +

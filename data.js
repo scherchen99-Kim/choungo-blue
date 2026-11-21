@@ -12,9 +12,10 @@ window.CHOUNGO_DATA = {
     name: "CHOUNGO BLUE",
     descriptor: "Creative Production",
     slogan: "Designed here. Built here.",
-    phone: "02-0000-0000",
+    phone: "031-964-4065",
+    fax: "031-964-7042",
     email: "hello@choungoblue.example",
-    address: "서울 (디자인 스튜디오) · 경기도 파주시 (제작센터)",
+    address: "경기도 파주시 상지석동 573-6",
     hours: "평일 09:00 – 18:00"
   },
 
