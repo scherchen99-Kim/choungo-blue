@@ -239,7 +239,7 @@ p { margin: 0; }
 .page-head h1 { font-size: clamp(60px, 13vw, 230px); }
 .page-head { position: relative; overflow: hidden; }
 .page-head > :not(.head-fx) { position: relative; z-index: 1; }
-.fx-swap { display: inline-block; transition: opacity .25s ease, transform .25s ease; }
+.fx-swap { display: inline-block; transition: opacity .45s ease, transform .45s ease, color .45s ease; }
 .fx-swap.out { opacity: 0; transform: translateY(.15em); }
 .fx-swap.won { color: #007fff; animation: fxWin .6s cubic-bezier(.2,1.6,.4,1) both; }
 @keyframes fxWin { from { opacity: 0; transform: scale(.3) rotate(-8deg); } to { opacity: 1; transform: none; } }
@@ -624,6 +624,6 @@ body.scrolling .work-grid { pointer-events: none; }   /* no hover effects firing
   <div class="lb-bot inner"><span class="label count" id="lbCount"></span></div>
 </div>
 
-<script src="data.js?v=20261122000544"></script>
-<script src="app.js?v=20261122000544"></script>
+<script src="data.js?v=20261122001202"></script>
+<script src="app.js?v=20261122001202"></script>
 </html>

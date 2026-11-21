@@ -221,13 +221,18 @@
         var sw = f.sec && f.sec.querySelector(".fx-swap");
         if (sw && !sw.classList.contains("won")) { sw.classList.add("out"); setTimeout(function () { sw.textContent = "win."; sw.classList.remove("out"); sw.classList.add("won"); }, 260); }
       }
-      if (tt - K.done > 6) { K.live = K.live.map(function () { return 1; }); K.done = 0; f.lastBreak = tt; }
+      if (tt - K.done > 6) {
+        K.live = K.live.map(function () { return 1; }); K.done = 0; f.lastBreak = tt; K.back = tt;   // the wall returns (fading in)
+        var sw2 = f.sec && f.sec.querySelector(".fx-swap");   // and the title softly goes back to "Our portfolio."
+        if (sw2 && sw2.classList.contains("won")) { sw2.classList.add("out"); setTimeout(function () { sw2.textContent = "portfolio."; sw2.classList.remove("won"); void sw2.offsetWidth; sw2.classList.remove("out"); }, 450); }
+      }
     }
     f.parts = f.parts.filter(function (p) { p.age += dt; if (p.age < 0) return true; p.vx *= Math.pow(.25, dt); p.vy = p.vy * Math.pow(.25, dt) + 140 * dt; p.x += p.vx * dt; p.y += p.vy * dt; return p.age < p.life; });
     f.parts.forEach(function (p) { if (p.age < 0) return; c.globalAlpha = Math.max(0, 1 - p.age / p.life); c.fillStyle = p.col; c.fillRect(p.x - 1.5, p.y - 1.5, 3, 3); });
     c.globalAlpha = 1;
     for (var j = 0; j < rows; j++) for (var i = 0; i < cols; i++) {
       var k = j * cols + i, x = 16 + i * bw + gap / 2, y = top + j * (bh + gap), al = K.live[k] ? 1 : Math.max(0, 1 - (tt - K.hit[k]) / .5);
+      if (K.live[k] && K.back) al *= Math.min(1, Math.max(0, (tt - K.back - (rows - 1 - j) * .08) / .6));   // new wall fades in row by row
       if (al <= 0) continue;
       c.fillStyle = "rgba(9,95,224," + (.1 * al).toFixed(3) + ")"; c.fillRect(x, y, bw - gap, bh);
       c.strokeStyle = FX_C + (.08 * al).toFixed(3) + ")"; c.lineWidth = 1; c.strokeRect(x + .5, y + .5, bw - gap - 1, bh - 1);
