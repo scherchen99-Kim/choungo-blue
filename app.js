@@ -1,6 +1,6 @@
 (function () {
   "use strict";
-  var D = window.PLINTH_DATA;
+  var D = window.CHOUNGO_DATA;
   var view = document.getElementById("view");
   var header = document.getElementById("header");
   var catLabel = {};
@@ -33,11 +33,11 @@
   /* ---------------- Shared fragments ---------------- */
   function tile(p, i) {
     return '<a class="tile in" href="#work-' + p.slug + '" data-cat="' + p.category + '" style="animation-delay:' + ((i % 8) * 40) + 'ms">' +
-      '<img src="' + p.images[0] + '" alt="' + esc(p.title) + '" loading="lazy">' +
+      '<img src="' + p.images[0] + '" alt="' + esc(p.title) + '">' +
       '<span class="ov"><span class="label">' + esc(catLabel[p.category]) + '</span><h3>' + esc(p.title) + '</h3></span></a>';
   }
   function slot(src, name, size, alt) {
-    if (src) return '<img src="' + src + '" alt="' + esc(alt) + '" loading="lazy">';
+    if (src) return '<img src="' + src + '" alt="' + esc(alt) + '">';
     return '<span class="slot"><b>이미지 자리</b><span>' + esc(name) + '</span><span>' + esc(size) + '</span></span>';
   }
   function shuffled(arr) {
@@ -48,22 +48,25 @@
 
   function footer() {
     var c = D.company;
-    return '<div class="inner">' +
+    return '<section class="partners"><div class="inner"><span class="label">Main Partners</span><h2>Brands we work with</h2></div>' +
+      '<div class="p-track"><img src="img/partners/samsung.png" alt="Samsung" style="height:31px"><img src="img/partners/sktelecom.png" alt="SK telecom" style="height:51px"><img src="img/partners/skmagic.png" alt="SK매직" style="height:54px"><img src="img/partners/lottehimart.png" alt="롯데하이마트" style="height:33px"><img src="img/partners/lottealuminium.png" alt="롯데알미늄" style="height:38px"><img src="img/partners/tsingtao.png" alt="Tsingtao" style="height:54px"><img src="img/partners/dimchae.png" alt="딤채" style="height:47px"><img src="img/partners/philips.png" alt="Philips" style="height:35px"><img src="img/partners/canon.png" alt="Canon" style="height:40px"><img src="img/partners/lguplus.png" alt="LG U+" style="height:43px"><img src="img/partners/hp.png" alt="HP" style="height:46px"><img src="img/partners/olympus.png" alt="Olympus" style="height:37px"><img src="img/partners/nespresso.png" alt="Nespresso" style="height:35px"><img src="img/partners/innisfree.png" alt="innisfree" style="height:60px"><img src="img/partners/thefaceshop.png" alt="The Face Shop" style="height:26px"><img src="img/partners/nonghyup.png" alt="농협" style="height:46px"><img src="img/partners/nhinvest.png" alt="NH투자증권" style="height:33px"><img src="img/partners/ibk.png" alt="IBK기업은행" style="height:47px"><img src="img/partners/hellomobile.png" alt="hello mobile" style="height:54px"><img src="img/partners/samsung.png" alt="Samsung" style="height:31px"><img src="img/partners/sktelecom.png" alt="SK telecom" style="height:51px"><img src="img/partners/skmagic.png" alt="SK매직" style="height:54px"><img src="img/partners/lottehimart.png" alt="롯데하이마트" style="height:33px"><img src="img/partners/lottealuminium.png" alt="롯데알미늄" style="height:38px"><img src="img/partners/tsingtao.png" alt="Tsingtao" style="height:54px"><img src="img/partners/dimchae.png" alt="딤채" style="height:47px"><img src="img/partners/philips.png" alt="Philips" style="height:35px"><img src="img/partners/canon.png" alt="Canon" style="height:40px"><img src="img/partners/lguplus.png" alt="LG U+" style="height:43px"><img src="img/partners/hp.png" alt="HP" style="height:46px"><img src="img/partners/olympus.png" alt="Olympus" style="height:37px"><img src="img/partners/nespresso.png" alt="Nespresso" style="height:35px"><img src="img/partners/innisfree.png" alt="innisfree" style="height:60px"><img src="img/partners/thefaceshop.png" alt="The Face Shop" style="height:26px"><img src="img/partners/nonghyup.png" alt="농협" style="height:46px"><img src="img/partners/nhinvest.png" alt="NH투자증권" style="height:33px"><img src="img/partners/ibk.png" alt="IBK기업은행" style="height:47px"><img src="img/partners/hellomobile.png" alt="hello mobile" style="height:54px"></div>' +
+      '</section>' +
+      '<div class="inner">' +
       '<div class="foot-contact">' +
         '<div><span class="label">Telephone</span><span class="v">' + esc(c.phone) + '</span></div>' +
         '<div><span class="label">Studio & Factory</span><span class="v">SEOUL — PAJU</span></div>' +
         '<div><span class="label">Email</span><span class="v">' + esc(c.email.toUpperCase()) + '</span></div>' +
       '</div>' +
-      '<div class="foot-bottom"><span class="logo"><span class="logo-word" style="font-size:16px">PLINTH</span></span>' +
-        '<span>회사명과 로고는 임시안입니다.</span>' +
-        '<span>© 2026 PLINTH Creative Production</span></div>' +
+      '<div class="foot-bottom"><span class="logo"><span class="logo-word" style="font-size:16px">CHOUNGO BLUE</span></span>' +
+        '<span>로고는 임시안입니다.</span>' +
+        '<span>© 2026 CHOUNGO BLUE</span></div>' +
     '</div>';
   }
 
   /* ---------------- HOME ---------------- */
   var homeOrder = [], homeShown = 0;
   function home() {
-    homeOrder = shuffled(D.projects);
+    homeOrder = D.projects.filter(function (p) { return p.category === "web"; }).concat(shuffled(D.projects.filter(function (p) { return p.category !== "web"; })));
     homeShown = Math.min(16, homeOrder.length);
     var spotPool = D.projects.filter(function (p) { return p.images.length >= 3; });
     var spot = spotPool[Math.floor(Math.random() * spotPool.length)] || D.projects[0];
@@ -75,16 +78,16 @@
     '<section class="hero hero-motion" id="hero">' +
       '<canvas id="heroCanvas" aria-hidden="true"></canvas>' +
       '<h1 class="sr-only">Designed here. Built here. 기획부터 디자인, 제작, 설치까지 한 곳에서.</h1>' +
-      '<p class="label kicker hero-kicker inner" id="heroKicker">One-stop creative production</p>' +
+      '<p class="label kicker hero-kicker inner" id="heroKicker">One-stop creative production<span class="cbar" aria-hidden="true"><i style="background:#00a6e2"></i><i style="background:#e4007f"></i><i style="background:#ffe100"></i><i style="background:#1a1a1a"></i></span></p>' +
       '<ol class="hero-steps inner" id="heroSteps">' + steps + '</ol>' +
     '</section>' +
 
     '<section class="section inner">' +
       '<div class="intro">' +
         '<h2 class="display">A creative studio with its own <em>production floor.</em></h2>' +
-        '<div class="copy"><p>PLINTH는 광고디자인 스튜디오이자 자체 제작센터를 갖춘 크리에이티브 프로덕션입니다. 아이디어를 그리는 팀과 그것을 실제로 만드는 팀이 한 회사 안에서 일합니다.</p>' +
+        '<div class="copy"><p>CHOUNGO BLUE는 광고디자인 스튜디오이자 자체 제작센터를 갖춘 크리에이티브 프로덕션입니다. 아이디어를 그리는 팀과 그것을 실제로 만드는 팀이 한 회사 안에서 일합니다.</p>' +
         '<p>그래픽과 편집디자인부터 POP, 디스플레이, 사인, 매장 연출까지. 기획에서 설치까지 하나의 흐름으로 이어지기 때문에 디자인 의도가 마지막 단계까지 그대로 남습니다.</p>' +
-        '<p><a class="link-arrow" href="#about">About PLINTH</a></p></div>' +
+        '<p><a class="link-arrow" href="#about">About CHOUNGO BLUE</a></p></div>' +
       '</div>' +
     '</section>' +
 
@@ -169,12 +172,12 @@
     var stepEls = document.querySelectorAll("#heroSteps li");
     var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     var W = 0, H = 0, dpr = 1, size = 100, pad = 24, groups = [], sparks = [];
-    var LOOP = 10.5;
+    var LOOP = 7.5, cbT0 = performance.now(), cbMark = null, cbTxt = null, cbCh = 0, cbPrev = -1, cbG = [], cbK = 0;
     // timeline (seconds)
-    var T = { grid: [0, .8], aS: [.5, 2.3], aP: [2.2, 3.6], bS: [3.3, 4.7], bL: [4.6, 6.6], fade: [9.6, 10.5] };
+    var T = { grid: [0, .8], aS: [.5, 2.3], aP: [2.2, 3.6], bS: [3.3, 4.7], bL: [4.6, 6.6], fade: [8.8, 10.5] };
     var STEP_T = [0, .5, 2.2, 3.6, 6.6, 9.6];
     var CMYK = ["#00a6e2", "#e4007f", "#ffe100", "#ffffff"];
-    var BLUE = "#2b44d6";
+    var BLUE = "#0c2340";
     function clamp(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
     function prog(t, r) { return clamp((t - r[0]) / (r[1] - r[0])); }
     function ease(x) { return x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; }
@@ -187,15 +190,18 @@
       var r = cv.getBoundingClientRect();
       dpr = Math.min(window.devicePixelRatio || 1, 2);
       W = r.width; H = r.height;
-      cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+      var nw = Math.round(W * dpr), nh = Math.round(H * dpr);
+      if (cv.width !== nw) cv.width = nw; if (cv.height !== nh) cv.height = nh; // resetting the size clears the canvas, so only do it on a real change
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       pad = Math.max(16, Math.min(56, W * 0.04));
       var narrow = W < 720;
-      var A = narrow ? ["DESIGNED", "HERE."] : ["DESIGNED HERE."];
-      var B = narrow ? ["BUILT", "HERE."] : ["BUILT HERE."];
+      // headline chapters (one per cycle): [line A words, line B words]
+      var CH = [[["DESIGNED", "HERE."], ["BUILT", "HERE."]], [["FROM", "IDEA"], ["TO", "IN-STORE."]], [["ONE", "TEAM."], ["ONE", "STOP."]]];
+      function ln(w) { return narrow ? w : [w.join(" ")]; }
+      var A = ln(CH[cbCh][0]), B = ln(CH[cbCh][1]);
       setFont(100);
       var widest = 0;
-      A.concat(B).forEach(function (l) { widest = Math.max(widest, ctx.measureText(l).width); });
+      CH.forEach(function (c) { ln(c[0]).concat(ln(c[1])).forEach(function (l) { widest = Math.max(widest, ctx.measureText(l).width); }); });
       var stepsH = (document.getElementById("heroSteps") || { offsetHeight: 80 }).offsetHeight;
       var lines = A.length + B.length;
       var maxByH = (H - stepsH - 150) / (lines * 0.9);
@@ -203,12 +209,17 @@
       var lh = size * 0.9;
       var bottom = H - stepsH - Math.max(28, size * 0.3);
       var y = bottom - (lines - 1) * lh;
-      groups = [A, B].map(function (g) {
-        var ls = g.map(function (t) { var o = { text: t, y: y }; y += lh; return o; });
-        setFont(size);
-        var w = 0; ls.forEach(function (l) { w = Math.max(w, ctx.measureText(l.text).width); });
-        return { lines: ls, top: ls[0].y - size * 0.78, bottom: ls[ls.length - 1].y + size * 0.06, width: w };
+      var y0 = y;
+      cbG = CH.map(function (c) {
+        y = y0;
+        return [ln(c[0]), ln(c[1])].map(function (g) {
+          var ls = g.map(function (t) { var o = { text: t, y: y }; y += lh; return o; });
+          setFont(size);
+          var w = 0; ls.forEach(function (l) { w = Math.max(w, ctx.measureText(l.text).width); });
+          return { lines: ls, top: ls[0].y - size * 0.78, bottom: ls[ls.length - 1].y + size * 0.06, width: w };
+        });
       });
+      groups = cbG[cbCh];
       if (kicker) kicker.style.top = Math.max(90, groups[0].top - 44) + "px";
     }
     function drawText(g, mode, color) {
@@ -219,77 +230,123 @@
     }
     function frame(t) {
       ctx.clearRect(0, 0, W, H);
-      ctx.fillStyle = "#0b0b0c"; ctx.fillRect(0, 0, W, H);
-      var fadeOut = 1 - prog(t, T.fade);
-      // cutting-mat grid
-      var ga = prog(t, T.grid) * 0.07, step = Math.max(28, size * 0.42);
-      ctx.strokeStyle = "rgba(255,255,255," + ga + ")"; ctx.lineWidth = 1;
-      ctx.beginPath();
-      for (var x = pad; x < W; x += step) { ctx.moveTo(x + .5, 0); ctx.lineTo(x + .5, H); }
-      for (var y2 = H - pad; y2 > 0; y2 -= step) { ctx.moveTo(0, y2 + .5); ctx.lineTo(W, y2 + .5); }
-      ctx.stroke();
-      // registration / crop marks around the artboard
-      var ma = prog(t, T.grid) * 0.55;
-      ctx.strokeStyle = "rgba(255,255,255," + ma + ")";
-      var x0 = pad, x1 = W - pad, y0 = Math.max(96, groups[0].top - 70), y1 = groups[1].bottom + Math.max(18, size * 0.18), m = 14;
-      ctx.beginPath();
-      [[x0, y0, -1, -1], [x1, y0, 1, -1], [x0, y1, -1, 1], [x1, y1, 1, 1]].forEach(function (c) {
-        ctx.moveTo(c[0], c[1] + c[3] * 6); ctx.lineTo(c[0], c[1] + c[3] * (6 + m));
-        ctx.moveTo(c[0] + c[2] * 6, c[1]); ctx.lineTo(c[0] + c[2] * (6 + m), c[1]);
+      // CHOUNGO BLUE background: a slow chain of ripple experiments; the ( O ) mark surfaces now and then and dissolves again
+      var BG = "#0a5fe0";
+      // navy at the top (matches the header bar) flowing into the bright blue
+      var bgG = ctx.createLinearGradient(0, 0, 0, H);
+      bgG.addColorStop(0, "#0c2340"); bgG.addColorStop(.12, "#0c2340"); bgG.addColorStop(.62, BG); bgG.addColorStop(1, BG);
+      ctx.fillStyle = bgG; ctx.fillRect(0, 0, W, H);
+      var LOOPS = 64, now = (performance.now() - cbT0) / 1000, sec = now % LOOPS;
+      var R = Math.max(46, Math.min(W, H) * .1), r = R * .643, th = R - r, d = R * .63;
+      var cx = W / 2, cy = Math.min(H * .34, H / 2 - R * 1.4), cxL = cx - d, cxR = cx + d;
+      var maxR = Math.hypot(W, H), V = R * .55, GAP = th * 2.1, BASE = .065;
+      function band(x, y, ro, w, col) { if (ro - w / 2 <= 0) return; ctx.strokeStyle = col; ctx.lineWidth = w; ctx.beginPath(); ctx.arc(x, y, ro - w / 2, 0, Math.PI * 2); ctx.stroke(); }
+      function e3(x) { x = clamp(x); return x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; }
+      function env(t, a0, a1, fi, fo) { return e3((t - a0) / fi) * (1 - e3((t - (a1 - fo)) / fo)); }
+      function rnd(n) { var x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
+      // emitter: rings leave a (possibly moving) source; a ring of radius rr was born at te = t - rr / v
+      function emit(t, t0, dur, pos, amp, gap, v) {
+        gap = gap || GAP; v = v || V; amp = amp || 1;
+        var oldest = t - t0; if (oldest <= 0) return;
+        var kMax = Math.floor(Math.min(oldest, dur + maxR / v) * v / gap);
+        var phase = ((t - t0) * v) % gap;
+        for (var k = 0; k <= kMax; k++) {
+          var rr = phase + k * gap; if (rr < th * .6 || rr > maxR) continue;
+          var te = t - rr / v; if (te < t0 || te > t0 + dur) continue;
+          var w = env(te, t0, t0 + dur, Math.min(1.5, dur / 3), Math.min(2, dur / 3)) * (1 - rr / maxR);
+          if (w <= .002) continue;
+          var p = pos(te); band(p[0], p[1], rr, th, "rgba(255,255,255," + (BASE * amp * w) + ")");
+        }
+      }
+      function at(x, y) { return function () { return [x, y]; }; }
+      // A) rain: scattered drops (0-16s, and again at the very end so the loop joins)
+      for (var i = 0; i < 9; i++) { var t0 = i * 1.6, sx = W * (.1 + .8 * rnd(i + 1)), sy = H * (.1 + .8 * rnd(i + 21)); emit(sec, t0, 2.2, at(sx, sy), 1.1); }
+      for (var j = 0; j < 3; j++) { var dp = at(W * (.15 + .7 * rnd(j + 50)), H * (.15 + .7 * rnd(j + 60))); emit(sec, 56 + j * 1.8, 2.2, dp, 1.1); emit(sec + LOOPS, 56 + j * 1.8, 2.2, dp, 1.1); }
+      // B) interference: two sources drifting slowly, their rings cross into moire (12-30s)
+      emit(sec, 12, 16, function (t) { return [W * (.28 + .06 * Math.sin(t * .25)), H * (.45 + .12 * Math.cos(t * .2))]; }, 1);
+      emit(sec, 13, 16, function (t) { return [W * (.72 + .06 * Math.cos(t * .22)), H * (.5 + .12 * Math.sin(t * .27))]; }, 1);
+      // C) travelling source: rings bunch up ahead and stretch behind (Doppler) (26-38s)
+      emit(sec, 26, 11, function (t) { var p = e3((t - 26) / 11); return [W * (-.05 + 1.1 * p), H * (.62 - .2 * Math.sin(p * Math.PI))]; }, 1, GAP * .9, V * 1.4);
+      // D) three wandering sources drift onto the logo centres (34-44s)
+      var homes = [cxL, cx, cxR];
+      homes.forEach(function (hx, i) {
+        var ox = W * [.15, .5, .85][i], oy = H * [.75, .85, .7][i];
+        emit(sec, 34 + i * .4, 6.5, function (t) { var p = e3((t - 34) / 6); return [ox + (hx - ox) * p, oy + (cy - oy) * p]; }, .9);
       });
-      ctx.stroke();
-      // registration target + color bar (top right)
-      var rx = x1 - 10, ry = W >= 720 ? y0 + 26 : y0 - 30;
-      ctx.beginPath(); ctx.arc(rx, ry, 7, 0, Math.PI * 2); ctx.moveTo(rx - 12, ry); ctx.lineTo(rx + 12, ry); ctx.moveTo(rx, ry - 12); ctx.lineTo(rx, ry + 12); ctx.stroke();
-      var cb = ["#00a6e2", "#e4007f", "#ffe100", "#1a1a1a", "#7fd3f1", "#f27fbf", "#fff080", "#8c8c88"];
-      if (W >= 720) cb.forEach(function (c, i) { ctx.globalAlpha = ma * 1.6; ctx.fillStyle = c; ctx.fillRect(rx - 26 - (cb.length - i) * 12, ry - 5, 10, 10); });
-      ctx.globalAlpha = 1;
-      ctx.globalAlpha = fadeOut;
-      // A: outline drawing (design)
-      var A = groups[0], B = groups[1];
-      var pa = ease(prog(t, T.aS)), L = size * 6;
-      ctx.lineWidth = Math.max(1, size / 110); ctx.strokeStyle = "rgba(255,255,255,.9)";
-      ctx.setLineDash([L, L]); ctx.lineDashOffset = L * (1 - pa);
-      if (pa > 0) drawText(A, "stroke");
-      ctx.setLineDash([]);
-      // A: print-head fill (production)
-      var pp = prog(t, T.aP), headX = pad - 30 + (A.width + 60) * ease(pp);
-      if (pp > 0) {
-        ctx.save(); ctx.beginPath(); ctx.rect(0, 0, headX, H); ctx.clip(); drawText(A, "fill", "#ffffff"); ctx.restore();
-        if (pp < 1) {
-          var hy0 = A.top - size * 0.12, hy1 = A.bottom + size * 0.12;
-          var gr = ctx.createLinearGradient(headX - 90, 0, headX, 0);
-          gr.addColorStop(0, "rgba(255,255,255,0)"); gr.addColorStop(1, "rgba(255,255,255,.18)");
-          ctx.fillStyle = gr; ctx.fillRect(headX - 90, hy0, 90, hy1 - hy0);
-          CMYK.forEach(function (c, i) { ctx.fillStyle = c; ctx.fillRect(headX + i * 4, hy0, 3, hy1 - hy0); });
-          ctx.fillStyle = "#d9d9d6"; ctx.fillRect(headX - 4, hy0 - 10, 26, 10); ctx.fillRect(headX - 4, hy1, 26, 10);
+      // E) the logo is a wavefront: one ring from each centre slows as it reaches the logo radius,
+      //    lines up for a breath (reads as the ( O ) mark), then keeps travelling outward like any wave
+      var tB = 39.5, tA = 44, tH = 46.5;
+      if (sec > tB && sec < 60) {
+        var rr;
+        if (sec < tA) rr = R * (1 - Math.pow(1 - (sec - tB) / (tA - tB), 3));
+        else if (sec < tH) rr = R * (1 + .012 * Math.sin((sec - tA) * 2.4));
+        else { var u = sec - tH; rr = R + V * .5 * u * u / (1 + u * .35); }
+        var heroA = .17 * e3((sec - tB) / 2) * Math.max(0, 1 - (rr - R) / (maxR * .6));
+        var half = e3((sec - (tA - 1.5)) / 1.5) * (1 - e3((sec - tH) / 1.6)); // inner halves of the side rings give way only while aligned
+        if (heroA > .002) {
+          if (!cbMark) cbMark = document.createElement("canvas");
+          if (cbMark.width !== cv.width || cbMark.height !== cv.height) { cbMark.width = cv.width; cbMark.height = cv.height; }
+          var m = cbMark.getContext("2d"); m.setTransform(dpr, 0, 0, dpr, 0, 0); m.clearRect(0, 0, W, H);
+          var ctx0 = ctx; ctx = m;
+          band(cx, cy, rr, th, "#fff");
+          ctx.save(); ctx.beginPath(); ctx.rect(0, 0, cxL, H); ctx.clip(); band(cxL, cy, rr, th, "#fff"); ctx.restore();
+          ctx.save(); ctx.beginPath(); ctx.rect(cxR, 0, W - cxR, H); ctx.clip(); band(cxR, cy, rr, th, "#fff"); ctx.restore();
+          ctx.save(); ctx.globalAlpha = 1 - half; ctx.beginPath(); ctx.rect(cxL, 0, W - cxL, H); ctx.clip(); band(cxL, cy, rr, th, "#fff"); ctx.restore();
+          ctx.save(); ctx.globalAlpha = 1 - half; ctx.beginPath(); ctx.rect(0, 0, cxR, H); ctx.clip(); band(cxR, cy, rr, th, "#fff"); ctx.restore();
+          ctx = ctx0;
+          ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = heroA; ctx.drawImage(cbMark, 0, 0); ctx.restore();
         }
       }
-      // B: outline (prototype)
-      var pb = ease(prog(t, T.bS));
-      ctx.lineWidth = Math.max(1, size / 110); ctx.strokeStyle = "rgba(255,255,255,.75)";
-      ctx.setLineDash([L, L]); ctx.lineDashOffset = L * (1 - pb);
-      if (pb > 0) drawText(B, "stroke");
-      ctx.setLineDash([]);
-      // B: laser cut reveal
-      var pl = prog(t, T.bL);
-      if (pl > 0) {
-        var lx = pad - 10 + (B.width + 20) * pl;
-        ctx.save(); ctx.beginPath(); ctx.rect(0, 0, lx, H); ctx.clip();
-        var off = Math.max(2, size * 0.035);
-        ctx.save(); ctx.translate(off, off); drawText(B, "fill", BLUE); ctx.restore();
-        drawText(B, "fill", "#ffffff");
-        ctx.restore();
-        if (pl < 1) {
-          var span = B.bottom - B.top, ly = B.top + span * (0.5 + 0.48 * Math.sin(t * 38));
-          var glow = ctx.createRadialGradient(lx, ly, 0, lx, ly, 34);
-          glow.addColorStop(0, "rgba(255,255,255,1)"); glow.addColorStop(.2, "rgba(140,170,255,.85)"); glow.addColorStop(1, "rgba(43,68,214,0)");
-          ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(lx, ly, 34, 0, Math.PI * 2); ctx.fill();
-          ctx.strokeStyle = "rgba(160,185,255,.5)"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(lx, 0); ctx.lineTo(lx, ly); ctx.stroke();
-          if (!reduce) for (var k = 0; k < 3; k++) sparks.push({ x: lx, y: ly, vx: (Math.random() - .3) * 260, vy: -Math.random() * 220 - 40, life: .5 + Math.random() * .4, age: 0 });
+      // trailing rings follow the wavefront out from the three centres
+      homes.forEach(function (hx) { emit(sec, tH + .6, 4.5, at(hx, cy), .9); });
+      var fadeOut = 1 - prog(t, T.fade);
+      ctx.globalAlpha = 1;
+      // headline never fades: each chapter change is a tool pass that swaps old text for new
+      //   line A: screen-print squeegee pulls new ink across;  line B: laser head cuts the old letters away and leaves the new
+      var cur = cbG[cbCh], prv = cbPrev >= 0 ? cbG[cbPrev] : null;
+      // tools never leave: they rest at the end of the line, then sweep back the other way to set the next chapter
+      function swap(gi, p0, p1, kind) {
+        var gN = cur[gi], gO = prv ? prv[gi] : null;
+        var L = pad - 22, eN = pad + gN.width + 18, eO = gO ? pad + gO.width + 18 : L, eM = Math.max(eN, eO);
+        var dir = cbK % 2 === 0 ? 1 : -1, x, sweeping = false;
+        if (dir === 1) {
+          if (t < p0) x = L;
+          else if (t < p1) { x = L + (eM - L) * ease(prog(t, [p0, p1])); sweeping = true; }
+          else x = eM + (eN - eM) * ease(prog(t, [p1, p1 + .5])); // settle exactly at the end of the new line
+        } else {
+          if (t < p0) x = eO + (eM - eO) * ease(prog(t, [p0 - .45, p0]));
+          else if (t < p1) { x = eM + (L - eM) * ease(prog(t, [p0, p1])); sweeping = true; }
+          else x = L;
+        }
+        // text: new on the side the tool has passed, old on the side it has not
+        if (t < p0) { if (gO) drawText(gO, "fill", "#ffffff"); }
+        else if (t >= p1) drawText(gN, "fill", "#ffffff");
+        else {
+          ctx.save(); ctx.beginPath(); if (dir === 1) ctx.rect(0, 0, x, H); else ctx.rect(x, 0, W - x, H); ctx.clip(); drawText(gN, "fill", "#ffffff"); ctx.restore();
+          if (gO) { ctx.save(); ctx.beginPath(); if (dir === 1) ctx.rect(x, 0, W - x, H); else ctx.rect(0, 0, x, H); ctx.clip(); drawText(gO, "fill", "#ffffff"); ctx.restore(); }
+        }
+        var top = gN.top - size * .1, bot = gN.bottom + size * .12;
+        if (kind === "print") {
+          if (sweeping) {
+            var tail = 110 * dir, gr = ctx.createLinearGradient(x - tail, 0, x, 0);
+            gr.addColorStop(0, "rgba(255,255,255,0)"); gr.addColorStop(1, "rgba(255,255,255,.22)");
+            ctx.fillStyle = gr; ctx.fillRect(Math.min(x, x - tail), top, Math.abs(tail), bot - top);
+            CMYK.forEach(function (c, i) { ctx.fillStyle = c; ctx.fillRect(x + dir * i * 4 - (dir < 0 ? 3 : 0), top, 3, bot - top); });
+          }
+          ctx.fillStyle = "rgba(230,236,245,.9)"; ctx.fillRect(x - 1.5, top, 3, bot - top);
+        } else {
+          ctx.strokeStyle = "rgba(200,235,255,.45)"; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(x, top); ctx.lineTo(x, bot); ctx.stroke();
+          var ly = sweeping ? top + (bot - top) * (0.5 + 0.46 * Math.sin(t * 36)) : (top + bot) / 2;
+          var rg = sweeping ? 30 : 9 + 2 * Math.sin(t * 3);
+          var glow = ctx.createRadialGradient(x, ly, 0, x, ly, rg);
+          glow.addColorStop(0, "rgba(255,255,255,1)"); glow.addColorStop(.25, "rgba(150,220,255,.8)"); glow.addColorStop(1, "rgba(150,220,255,0)");
+          ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(x, ly, rg, 0, Math.PI * 2); ctx.fill();
+          if (sweeping && !reduce) for (var k = 0; k < 3; k++) sparks.push({ x: x, y: ly, vx: (Math.random() - .5 - .2 * dir) * 260, vy: -Math.random() * 220 - 40, life: .5 + Math.random() * .4, age: 0 });
         }
       }
-      ctx.globalAlpha = 1;
+      swap(0, .5, 1.9, "print");
+      swap(1, 1.3, 2.9, "laser");
     }
     function drawSparks(dt) {
       for (var i = sparks.length - 1; i >= 0; i--) {
@@ -312,7 +369,9 @@
     var start = performance.now(), last = start;
     function loop(now) {
       var t = ((now - start) / 1000) % LOOP, dt = Math.min(.05, (now - last) / 1000); last = now;
-      frame(t); drawSparks(dt); setSteps(t);
+      var k = Math.floor(Math.max(0, now - start) / 1000 / LOOP);
+      cbK = k; cbCh = k % 3; cbPrev = k > 0 ? (k - 1) % 3 : -1; groups = cbG[cbCh];
+      frame(t); drawSparks(dt); setSteps(t / LOOP * 10.5);
       heroRAF = requestAnimationFrame(loop);
     }
     function onResize() { layout(); if (reduce) { frame(8); setSteps(9.5); } }
@@ -333,7 +392,7 @@
     '<section class="page-head inner">' +
       '<span class="label" style="color:var(--grey)">About / Services</span>' +
       '<h1 class="display" style="margin-top:20px">We design it.<br>We make it.</h1>' +
-      '<div class="row"><span></span><p>PLINTH는 디자인 스튜디오의 감각과 제작사의 실행력을 함께 가진 회사입니다. 브랜드가 매장과 거리에서 사람을 만나는 모든 접점을 기획하고, 디자인하고, 직접 만듭니다.</p></div>' +
+      '<div class="row"><span></span><p>CHOUNGO BLUE는 디자인 스튜디오의 감각과 제작사의 실행력을 함께 가진 회사입니다. 브랜드가 매장과 거리에서 사람을 만나는 모든 접점을 기획하고, 디자인하고, 직접 만듭니다.</p></div>' +
     '</section>' +
     '<section class="section dark" style="padding-top:0">' +
       '<div class="inner"><div class="stat-strip">' +
@@ -423,11 +482,11 @@
       '<div><p>' + esc(p.description) + '</p></div>' +
     '</div></section>' +
     '<div class="gallery inner" id="gallery">' + p.images.map(function (src, i) {
-      return '<button type="button" data-i="' + i + '" aria-label="이미지 ' + (i + 1) + ' 확대"><img src="' + src + '" alt="' + esc(p.title) + ' 이미지 ' + (i + 1) + '" loading="lazy"></button>';
+      return '<button type="button" data-i="' + i + '" aria-label="이미지 ' + (i + 1) + ' 확대"><img src="' + src + '" alt="' + esc(p.title) + ' 이미지 ' + (i + 1) + '"></button>';
     }).join("") + '</div>' +
     '<nav class="p-next" aria-label="다른 프로젝트">' +
-      '<a href="#work-' + prev.slug + '"><img src="' + prev.images[0] + '" alt="" loading="lazy"><span class="t"><span class="label">← Previous</span><h3>' + esc(prev.title) + '</h3></span></a>' +
-      '<a class="nx" href="#work-' + next.slug + '"><img src="' + next.images[0] + '" alt="" loading="lazy"><span class="t"><span class="label">Next →</span><h3>' + esc(next.title) + '</h3></span></a>' +
+      '<a href="#work-' + prev.slug + '"><img src="' + prev.images[0] + '" alt=""><span class="t"><span class="label">← Previous</span><h3>' + esc(prev.title) + '</h3></span></a>' +
+      '<a class="nx" href="#work-' + next.slug + '"><img src="' + next.images[0] + '" alt=""><span class="t"><span class="label">Next →</span><h3>' + esc(next.title) + '</h3></span></a>' +
     '</nav>';
   }
   function bindGallery(slug) {
@@ -450,7 +509,7 @@
     '<div class="fac-band">' + slot("", "facilities-top.jpg", "2400 × 1050", "제작센터") + '</div>' +
     '<section>' + D.facilities.map(function (f, i) {
       return '<article class="fac">' +
-        (f.image ? '<button type="button" class="media" data-i="' + i + '" aria-label="' + esc(f.nameKo) + ' 이미지 확대"><img src="' + f.image + '" alt="' + esc(f.nameKo) + '" loading="lazy"></button>' : '<div class="media">' + slot("", "fac-" + f.id + ".jpg", "1600 × 1000", f.nameKo) + '</div>') +
+        (f.image ? '<button type="button" class="media" data-i="' + i + '" aria-label="' + esc(f.nameKo) + ' 이미지 확대"><img src="' + f.image + '" alt="' + esc(f.nameKo) + '"></button>' : '<div class="media">' + slot("", "fac-" + f.id + ".jpg", "1600 × 1000", f.nameKo) + '</div>') +
         '<div class="body"><span class="label no">' + pad(i + 1) + ' / ' + pad(D.facilities.length) + '</span>' +
           '<h2>' + esc(f.name) + '</h2><p class="ko">' + esc(f.nameKo) + '</p><p>' + esc(f.desc) + '</p>' +
           '<dl class="specs">' + f.specs.map(function (s) { return '<div><dt>' + esc(s[0]) + '</dt><dd>' + esc(s[1]) + '</dd></div>'; }).join("") + '</dl>' +

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   PLINTH — 사이트 콘텐츠 데이터
+   CHOUNGO BLUE — 사이트 콘텐츠 데이터
    --------------------------------------------------------------------------
    홈페이지의 포트폴리오·장비·연락처 정보는 모두 이 파일 하나에서 관리합니다.
    · 포트폴리오 순서 = projects 배열의 순서 (위에 있을수록 먼저 노출)
@@ -7,18 +7,19 @@
    · images: 첫 번째 이미지가 대표(썸네일) 이미지, 여러 장 등록 가능
    · category 값은 아래 categories 의 id 중 하나
    ========================================================================== */
-window.PLINTH_DATA = {
+window.CHOUNGO_DATA = {
   company: {
-    name: "PLINTH",
+    name: "CHOUNGO BLUE",
     descriptor: "Creative Production",
     slogan: "Designed here. Built here.",
     phone: "02-0000-0000",
-    email: "hello@plinth.example",
+    email: "hello@choungoblue.example",
     address: "서울 (디자인 스튜디오) · 경기도 파주시 (제작센터)",
     hours: "평일 09:00 – 18:00"
   },
 
   categories: [
+    { id: "web", label: "Web Design" },
     { id: "pop", label: "POP & POSM" },
     { id: "print", label: "Graphic & Print" },
     { id: "display", label: "Display & VMD" },
@@ -26,6 +27,8 @@ window.PLINTH_DATA = {
   ],
 
   projects: [
+    {"slug": "web-kiumin", "title": "(주)키움인 홈페이지 리뉴얼", "client": "키움인", "category": "web", "type": "Web", "scope": ["웹 기획", "UI 디자인", "반응형 구축"], "description": "AI·디지털 교육 사회적기업 키움인의 홈페이지를 새로 기획하고 디자인했습니다. 교육 프로그램과 성과를 첫 화면에서 바로 보여주도록 구성했습니다.", "images": ["img/work/web-kiumin.jpg"]},
+    {"slug": "web-hyuckjin", "title": "혁진환경엔지니어링 홈페이지", "client": "혁진환경엔지니어링", "category": "web", "type": "Web", "scope": ["웹 기획", "UI 디자인", "다국어 구축"], "description": "폐기물 에너지화 플랜트 기업의 글로벌 홈페이지입니다. 기술과 해외 프로젝트를 한눈에 보여주도록 영문 중심으로 설계했습니다.", "images": ["img/work/web-hyuckjin.jpg"]},
     {"slug": "w9", "title": "삼성전자 기어 웨어러블", "client": "삼성전자", "category": "pop", "type": "POP", "scope": ["POP 디자인", "구조 설계", "제작"], "description": "매장 판매대에서 제품의 기능을 바로 보여주는 POP 집기입니다. 그래픽과 구조를 함께 설계하고 자체 제작센터에서 제작했습니다.", "images": ["img/work/p09-0.jpg", "img/work/p10-0.jpg"]},
     {"slug": "w11", "title": "삼성전자 갤럭시 탭 S4", "client": "삼성전자", "category": "pop", "type": "POP", "scope": ["POP 디자인", "구조 설계", "제작"], "description": "매장 판매대에서 제품의 기능을 바로 보여주는 POP 집기입니다. 그래픽과 구조를 함께 설계하고 자체 제작센터에서 제작했습니다.", "images": ["img/work/p11-0.jpg", "img/work/p11-1.jpg", "img/work/p11-2.jpg"]},
     {"slug": "w12", "title": "삼성전자 갤럭시 S8 · 노트", "client": "삼성전자", "category": "pop", "type": "POP", "scope": ["POP 디자인", "구조 설계", "제작"], "description": "매장 판매대에서 제품의 기능을 바로 보여주는 POP 집기입니다. 그래픽과 구조를 함께 설계하고 자체 제작센터에서 제작했습니다.", "images": ["img/work/p12-0.jpg"]},
