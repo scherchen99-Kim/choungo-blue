@@ -145,9 +145,9 @@
     c.fill();
   }
   function fxGrid(c, W, H, tt, mx, my, f) {   // Portfolio: a layout grid with crop marks; frames light up one by one like work loading in
-    var cw = Math.max(64, W / 14), ch = cw * .625, cols = Math.ceil(W / cw), rows = Math.ceil(H / ch);
+    var cw = Math.max(44, W / 22), ch = cw * .625, cols = Math.ceil(W / cw), rows = Math.ceil(H / ch);   // tighter grid
     f.cells = f.cells || []; f.next = f.next || 0;
-    if (tt > f.next) { f.cells.push({ i: Math.floor(Math.random() * cols), j: Math.floor(Math.random() * rows), t0: tt }); f.next = tt + .45; }
+    if (tt > f.next) { f.cells.push({ i: Math.floor(Math.random() * cols), j: Math.floor(Math.random() * rows), t0: tt }); f.next = tt + .28; }
     f.cells = f.cells.filter(function (q) { return tt - q.t0 < 2.6; });
     var hi = Math.floor(mx / cw), hj = Math.floor(my / ch);
     f.cells.concat(mx > 0 && my > 0 && my < H ? [{ i: hi, j: hj, hover: true }] : []).forEach(function (q) {
