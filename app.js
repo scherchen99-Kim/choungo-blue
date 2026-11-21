@@ -57,15 +57,11 @@
   // endless rows (portfolio pictures on phones, partner logos): moved by script, so they keep running even when
   // the phone asks for reduced motion and Safari would freeze a CSS animation; off-screen rows are skipped
   var marqs = [], marqT = 0;
-  var marqIO = "IntersectionObserver" in window ? new IntersectionObserver(function (es) {
-    es.forEach(function (e) { if (e.target._mq) e.target._mq.vis = e.isIntersecting; });
-  }, { rootMargin: "100px 0px" }) : null;
   function startMarq() {
     document.querySelectorAll(".m-track, .p-track").forEach(function (el) {
       if (el._mq) return;
       var rev = !!el.closest(".m-row.rev");
-      el._mq = { x: 0, dir: rev ? -1 : 1, speed: el.classList.contains("p-track") ? 55 : 26, vis: !marqIO, hover: false, start: rev };
-      if (marqIO) marqIO.observe(el);
+      el._mq = { x: 0, dir: rev ? -1 : 1, speed: el.classList.contains("p-track") ? 55 : 26, hover: false, start: rev };
       var host = el.closest(".partners");
       if (host && window.matchMedia("(hover: hover)").matches) {
         host.addEventListener("mouseenter", function () { el._mq.hover = true; });
@@ -80,7 +76,9 @@
     var dt = marqLast ? Math.min(.05, (t - marqLast) / 1000) : 0; marqLast = t;
     marqs = marqs.filter(function (el) { return document.body.contains(el); });
     marqs.forEach(function (el) {
-      var m = el._mq; if (!m.vis || m.hover || el.offsetParent === null) return;
+      var m = el._mq; if (m.hover) return;
+      var r = el.parentNode.getBoundingClientRect();   // visibility checked directly every frame (no observer, which Safari can miss for very wide rows)
+      if (!r.width || r.bottom < -80 || r.top > innerHeight + 80) return;
       if (el.querySelector(".tile.show")) return;   // a caption is open: hold the row
       var half = el.scrollWidth / 2; if (!half) return;
       if (m.start) { m.x = half / 2; m.start = false; }
