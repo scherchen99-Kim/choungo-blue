@@ -196,7 +196,7 @@
       pad = Math.max(16, Math.min(56, W * 0.04));
       var narrow = W < 720;
       // headline chapters (one per cycle): [line A words, line B words]
-      var CH = [[["PLAN", "IT"], ["RIGHT."]], [["DESIGN", "IT"], ["BOLD."]], [["PRINT", "IT"], ["PERFECT."]], [["FINISH", "IT"], ["SHARP."]]];
+      var CH = [[["CLEAR", "IDEAS"], ["PLANNED", "HERE."]], [["BOLD", "VISUALS"], ["DESIGNED", "HERE."]], [["TRUE", "COLORS"], ["PRINTED", "HERE."]], [["FINE", "DETAILS"], ["FINISHED", "HERE."]]];
       function ln(w) { return narrow ? w : [w.join(" ")]; }
       var A = ln(CH[cbCh][0]), B = ln(CH[cbCh][1]);
       setFont(100);
@@ -310,6 +310,20 @@
       function linesOf(g) { return g ? g[0].lines.concat(g[1].lines) : []; }
       function clipX(g, x0, x1) { ctx.save(); ctx.beginPath(); ctx.rect(x0, 0, x1 - x0, H); ctx.clip(); drawText(g, "fill", WHITE); ctx.restore(); }
       function both(fn) { fn(cur[0], 0); fn(cur[1], 1); }
+      var INK = ["#ffe58a", "#ffb3cd", "#a9e7ff", "#ffcb9a", "#aef0c8", "#ffb4ab", "#e6f5a0", "#d6c8ff", "#ffd9a0", "#a8f2e6", "#f7c0f0", "#c4e3ff"];   // pastel ink, a different one for each letter
+      function paint(g, gi, chap) {
+        if (chap !== 2 || gi !== 0) { drawText(g, "fill", WHITE); return; }
+        setFont(size); var n = 0;
+        g.lines.forEach(function (l) {
+          for (var c = 0; c < l.text.length; c++) {
+            if (l.text[c] === " ") continue;
+            var x0 = pad + ctx.measureText(l.text.slice(0, c)).width, x1 = pad + ctx.measureText(l.text.slice(0, c + 1)).width;
+            ctx.save(); ctx.beginPath(); ctx.rect(x0 - .5, l.y - size, x1 - x0 + 1, size * 1.3); ctx.clip();
+            ctx.fillStyle = INK[n++ % INK.length]; ctx.fillText(l.text, pad, l.y); ctx.restore();
+          }
+        });
+      }
+      function paintClip(g, gi, chap, x0, x1) { ctx.save(); ctx.beginPath(); ctx.rect(x0, 0, x1 - x0, H); ctx.clip(); paint(g, gi, chap); ctx.restore(); }
       var kind = cbCh;
       if (kind === 0) {
         setFont(size); ctx.fillStyle = WHITE;
@@ -380,15 +394,12 @@
           var top = A0.top + size * .04, bot = B0.bottom - size * .02;
           var STENCIL = "rgba(255,255,255,.2)";
           if (t < .5 && prv) both(function (g, i) { drawText(prv[i], "fill", WHITE); });
-          else if (x >= eM) both(function (g) { drawText(g, "fill", WHITE); });
+          else if (x >= eM) both(function (g, i) { paint(g, i, 2); });
           else {
-            both(function (g) { clipX(g, 0, x); });
-            both(function (g) { ctx.save(); ctx.beginPath(); ctx.rect(x, 0, W - x, H); ctx.clip(); drawText(g, "fill", STENCIL); ctx.restore(); });
+            both(function (g, i) { paintClip(g, i, 2, 0, x); });                       // printed: final colour straight away
+            if (prv) both(function (g, i) { paintClip(prv[i], i, cbPrev, x, W); });     // not printed yet: the previous copy
           }
           if (sweeping) {
-            var gr = ctx.createLinearGradient(x - 120, 0, x, 0);
-            gr.addColorStop(0, "rgba(255,255,255,0)"); gr.addColorStop(1, "rgba(255,255,255,.18)");
-            ctx.fillStyle = gr; ctx.fillRect(x - 120, top, 120, bot - top);
             CMYK.forEach(function (c, i) { ctx.fillStyle = c; ctx.fillRect(x + i * 4, top, 3, bot - top); });
             ctx.fillStyle = "#e6e9ef"; ctx.fillRect(x - 2, top - 10, 22, 10); ctx.fillRect(x - 2, bot, 22, 10);   // squeegee holder, top and bottom
             ctx.fillStyle = "rgba(230,236,245,.9)"; ctx.fillRect(x + 17, top, 3, bot - top);
@@ -410,7 +421,7 @@
             clipX(g, 0, cut[gi]);                                  // cut letters: new copy
             if (t >= T0 || !prv) {                                  // not yet reached: faint cutting path of the new letters
               ctx.save(); ctx.beginPath(); ctx.rect(cut[gi], 0, W, H); ctx.clip(); ctx.lineWidth = Math.max(1, size / 110); ctx.strokeStyle = "rgba(255,255,255,.28)"; drawText(g, "stroke"); ctx.restore();
-            } else clipX(prv[gi], 0, W);
+            } else paintClip(prv[gi], gi, cbPrev, 0, W);
           });
           if (idx >= 0 && !finished) {
             var lt = letters[idx], bx = lt.x0, bw = lt.x1 - lt.x0, by = lt.line.y - size * .74, bh = size * .74;
