@@ -356,26 +356,65 @@
         // select the old copy -> it is deleted -> the corner is dragged out and the new copy appears as a picture (a plate)
         // -> the pen tool traces each letter -> the plate around the letters is cut away and only the letters stay
         var T_IN = .3, T_DRAG = 1.0, T_DEL = 1.8, T_GROW = 2.6, T_PEN = 3.1, T_A = 4.0, T_B = 4.9, T_CUT = 5.5;   // blurred copy is held ~0.5s before the pen starts
-        // blurred copy = 14 faint offset copies; FAINT is tuned so the blurred letters read at roughly 5%
+        // blurred copy: the letters are drawn small and scaled back up (a real soft blur, works in Safari too), cached per copy
+        function offFont(x) { x.font = ctx.font; if ("fontStretch" in x) x.fontStretch = "condensed"; x.textBaseline = "alphabetic"; }
+        function blurImg(gs, col) {
+          var key = col + W + "x" + H + "@" + size;
+          if (gs[0]._bk === key) return gs[0]._bi;
+          var f = Math.max(6, size / 22), c = document.createElement("canvas");
+          c.width = Math.ceil(W / f); c.height = Math.ceil(H / f);
+          var x = c.getContext("2d"); setFont(size); offFont(x); x.scale(1 / f, 1 / f); x.fillStyle = col;
+          gs.forEach(function (g) { g.lines.forEach(function (l) { x.fillText(l.text, pad, l.y); }); });
+          // smooth the small image (two box-blur passes on the alpha) so the scaled-up blur has no steps
+          var cw = c.width, chh = c.height, id = x.getImageData(0, 0, cw, chh), d = id.data, tmp = new Float32Array(cw * chh), al = new Float32Array(cw * chh), i, j, q, sum;
+          for (i = 0; i < cw * chh; i++) al[i] = d[i * 4 + 3];
+          for (var pass = 0; pass < 2; pass++) {
+            for (j = 0; j < chh; j++) for (i = 0; i < cw; i++) { sum = 0; for (q = -1; q <= 1; q++) sum += al[j * cw + Math.min(cw - 1, Math.max(0, i + q))]; tmp[j * cw + i] = sum / 3; }
+            for (j = 0; j < chh; j++) for (i = 0; i < cw; i++) { sum = 0; for (q = -1; q <= 1; q++) sum += tmp[Math.min(chh - 1, Math.max(0, j + q)) * cw + i]; al[j * cw + i] = sum / 3; }
+          }
+          var rgb = col === "#ffffff" || col === "#fff" ? [255, 255, 255] : [parseInt(col.slice(1, 3), 16), parseInt(col.slice(3, 5), 16), parseInt(col.slice(5, 7), 16)];
+          for (i = 0; i < cw * chh; i++) { d[i * 4] = rgb[0]; d[i * 4 + 1] = rgb[1]; d[i * 4 + 2] = rgb[2]; d[i * 4 + 3] = al[i]; }
+          x.putImageData(id, 0, 0);
+          gs[0]._bk = key; gs[0]._bi = c; return c;
+        }
         function haze(gs, col, amount) {
           if (amount <= 0) return;
-          var br = Math.max(4, size * .06), a1 = 1 - Math.pow(1 - .3 * amount, 1 / 14);   // blurred letters read at ~30%, visible on the blue plate
-          for (var bk = 0; bk < 14; bk++) {
-            var an = bk / 14 * Math.PI * 2, r3 = br * (bk % 2 ? 1 : .55);
-            ctx.save(); ctx.translate(Math.cos(an) * r3, Math.sin(an) * r3); ctx.globalAlpha = a1;
-            gs.forEach(function (g) { drawText(g, "fill", col); }); ctx.restore();
-          }
-          ctx.globalAlpha = 1;
+          ctx.save(); ctx.globalAlpha = .42 * amount; ctx.imageSmoothingEnabled = true; if ("imageSmoothingQuality" in ctx) ctx.imageSmoothingQuality = "high";
+          ctx.drawImage(blurImg(gs, col), 0, 0, W, H); ctx.restore();
         }
         var PLATE = "#007fff", PATH = "#000055";
         var lw = Math.max(1.5, size / 80);
         var oX0 = pad, oY0 = prv ? prv[0].top : cur[0].top, oX1 = pad + (prv ? Math.max(prv[0].width, prv[1].width) : 40), oY1 = prv ? prv[1].bottom : cur[1].bottom;
         var nX0 = pad - size * .06, nY0 = cur[0].top - size * .05, nX1 = pad + Math.max(cur[0].width, cur[1].width) + size * .06, nY1 = cur[1].bottom + size * .06;   // tighter plate, stays clear of the line above
         var sx0 = oX1 + 30, sy0 = oY1 + 30;
+        function outlinePts(g) {
+          var key = W + "@" + size; if (g._pk === key) return g._pts;
+          var pts = [], oy = Math.ceil(size * 1.0), h = Math.ceil(size * 1.25), w = Math.ceil(W), c = document.createElement("canvas");
+          c.width = w; c.height = h; var x = c.getContext("2d"); setFont(size); offFont(x);
+          g.lines.forEach(function (l) {
+            x.clearRect(0, 0, w, h); x.fillStyle = "#000"; x.fillText(l.text, pad, oy);
+            var d = x.getImageData(0, 0, w, h).data;
+            function ink(cx, cy) { return d[(cy * w + cx) * 4 + 3] > 140; }
+            for (var ci = 0; ci < l.text.length; ci++) {
+              if (l.text[ci] === " ") continue;
+              var c0 = Math.max(0, Math.floor(pad + x.measureText(l.text.slice(0, ci)).width)), c1 = Math.min(w - 1, Math.ceil(pad + x.measureText(l.text.slice(0, ci + 1)).width));
+              var top = -1, bot = -1, lef = -1, rig = -1, r, k;
+              for (r = 0; r < h && top < 0; r++) for (k = c0; k < c1; k++) if (ink(k, r)) { top = r; break; }
+              if (top < 0) continue;
+              for (r = h - 1; r >= 0 && bot < 0; r--) for (k = c0; k < c1; k++) if (ink(k, r)) { bot = r; break; }
+              for (k = c0; k < c1 && lef < 0; k++) for (r = top; r <= bot; r++) if (ink(k, r)) { lef = k; break; }
+              for (k = c1 - 1; k >= c0 && rig < 0; k--) for (r = top; r <= bot; r++) if (ink(k, r)) { rig = k; break; }
+              function runX(row) { var a = -1, b = -1; for (var q = c0; q < c1; q++) if (ink(q, row)) { if (a < 0) a = q; b = q; } return (a + b) / 2; }
+              function runY(col) { var a = -1, b = -1; for (var q = top; q <= bot; q++) if (ink(col, q)) { if (a < 0) a = q; b = q; } return (a + b) / 2; }
+              var dy = l.y - oy;
+              pts.push([runX(top), top + dy], [runX(bot), bot + 1 + dy], [lef, runY(lef) + dy], [rig + 1, runY(rig) + dy]);
+            }
+          });
+          g._pk = key; g._pts = pts; return pts;
+        }
         function anchorsFor(g, x0, x1) {
           ctx.fillStyle = "#fff"; ctx.strokeStyle = PATH; ctx.lineWidth = 1.5;
-          var step = Math.max(40, size * .55);
-          for (var ax = pad; ax <= pad + g.width; ax += step) { if (ax < x0 || ax > x1) continue; [g.top + size * .1, g.bottom - size * .02].forEach(function (ay) { ctx.fillRect(ax - 3.5, ay - 3.5, 7, 7); ctx.strokeRect(ax - 3.5, ay - 3.5, 7, 7); }); }
+          outlinePts(g).forEach(function (p) { if (p[0] < x0 || p[0] > x1) return; ctx.fillRect(p[0] - 3.5, p[1] - 3.5, 7, 7); ctx.strokeRect(p[0] - 3.5, p[1] - 3.5, 7, 7); });
         }
         if (t < T_DEL) {
           // 1) marquee-select the old copy
@@ -399,7 +438,15 @@
             ctx.globalAlpha = 1 - cut; ctx.fillStyle = PLATE; ctx.fillRect(bx0, by0, bx1 - bx0, by1 - by0);
             // blurred first copy turns into the blurred second copy, both faint
             var morph = ease(prog(t, [T_DEL, T_GROW]));
-            if (prv) haze([prv[0], prv[1]], PRV, (1 - morph) * (1 - cut));
+            if (prv) haze([prv[0], prv[1]], WHITE, (1 - morph) * (1 - cut));
+            // the blur stays only where the pen hasn't been yet (no glow left around traced letters)
+            var midY = (cur[0].bottom + cur[1].top) / 2;
+            ctx.beginPath(); ctx.rect(0, 0, W, H);
+            [[0, T_PEN, T_A, 0, midY], [1, T_A, T_B, midY, H]].forEach(function (d) {
+              var g = cur[d[0]], ox = pad - 6 + (g.width + 12) * ease(prog(t, [d[1], d[2]]));
+              if (t > d[1]) ctx.rect(0, d[3], ox + size * .08, d[4] - d[3]);
+            });
+            ctx.clip("evenodd");
             haze([cur[0], cur[1]], CUR, morph * (1 - cut));
             ctx.globalAlpha = 1;
             ctx.restore();
