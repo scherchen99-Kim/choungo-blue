@@ -474,6 +474,14 @@ form.brief { display: grid; gap: 28px; }
 .tile[hidden] { display: none !important; }   /* category filter */
 /* curated covers fill their tile edge to edge */
 .tile img[src*="thumb/feat-"] { object-fit: cover; width: 100%; height: 100%; }
+/* facilities page (desktop): each photo fills its whole row, no lines or gaps between rows */
+@media (min-width: 761px) {
+  .fac-wrap .fac { border-bottom: 0; align-items: stretch; }
+  .fac-wrap .fac .media { position: relative; overflow: hidden; min-height: 440px; padding: 0; border: 0; }
+  .fac-wrap .fac .media img { position: absolute; inset: -1px; width: calc(100% + 2px); height: calc(100% + 2px); max-width: none; object-fit: cover; aspect-ratio: auto; }
+  .fac-wrap .fac + .fac { margin-top: -1px; }
+  .fac-band img { display: block; width: 100%; }
+}
 /* ---------- home: the last grid slot links to the full portfolio ---------- */
 .tile-all { display: flex !important; flex-direction: column; justify-content: space-between; padding: clamp(18px, 2.4vw, 32px); background: #095fe0 !important; color: #fff; }
 .tile-all span { font-family: var(--display); font-weight: 850; font-stretch: 75%; text-transform: uppercase; font-size: clamp(30px, 3.4vw, 54px); line-height: .95; }
@@ -549,6 +557,6 @@ form.brief { display: grid; gap: 28px; }
   <div class="lb-bot inner"><span class="label count" id="lbCount"></span><span class="label" style="color:var(--grey)">Sample visual</span></div>
 </div>
 
-<script src="data.js?v=20261121155105"></script>
-<script src="app.js?v=20261121155105"></script>
+<script src="data.js?v=20261121155331"></script>
+<script src="app.js?v=20261121155331"></script>
 </html>
