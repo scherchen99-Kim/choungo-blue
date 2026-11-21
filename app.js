@@ -272,7 +272,15 @@
       // E) visitor clicks: concentric rings from the clicked point (real time, not looped)
       for (var ci = cbClicks.length - 1; ci >= 0; ci--) {
         var ck = cbClicks[ci]; if (now - ck.t > 16) { cbClicks.splice(ci, 1); continue; }
-        emit(now, ck.t, 1.4, at(ck.x, ck.y), 1.9);
+        var age = now - ck.t;                     // clear, quick rings that start right at the click
+        for (var kk = 0; kk < 5; kk++) {
+          var ag = age - kk * .16; if (ag <= 0) continue;
+          var rr2 = 6 + ag * R * 2.4; if (rr2 > maxR) continue;
+          var fa = Math.max(0, 1 - ag / 2.6) * (1 - rr2 / maxR);
+          if (fa <= 0) continue;
+          ctx.strokeStyle = "rgba(255,255,255," + (.42 * fa) + ")"; ctx.lineWidth = Math.max(2, th * .32);
+          ctx.beginPath(); ctx.arc(ck.x, ck.y, rr2, 0, Math.PI * 2); ctx.stroke();
+        }
       }
       var fadeOut = 1 - prog(t, T.fade);
       ctx.globalAlpha = 1;
