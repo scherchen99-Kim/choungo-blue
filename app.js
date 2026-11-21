@@ -321,6 +321,7 @@
       var INK = ["#ffe58a", "#ffb3cd", "#a9e7ff", "#ffcb9a", "#aef0c8", "#ffb4ab", "#e6f5a0", "#d6c8ff", "#ffd9a0", "#a8f2e6", "#f7c0f0", "#c4e3ff"];   // pastel ink, a different one for each letter
       function paint(g, gi, chap) {
         if (chap !== 2 || gi !== 0) { drawText(g, "fill", WHITE); return; }
+        drawText(g, "fill", "#007fff"); return;   // TRUE COLORS printed in the brand blue
         setFont(size); var n = 0;
         g.lines.forEach(function (l) {
           for (var c = 0; c < l.text.length; c++) {
@@ -712,6 +713,16 @@
     if (lbLast) lbLast.focus();
   }
   document.getElementById("lbClose").addEventListener("click", closeLB);
+  // portfolio tiles open the images in the viewer instead of a full detail page
+  document.addEventListener("click", function (e) {
+    var t = e.target.closest && e.target.closest('a.tile[href^="#work-"]');
+    if (!t) return;
+    var slug = t.getAttribute("href").slice(6), p = D.projects.filter(function (q) { return q.slug === slug; })[0];
+    if (!p) return;
+    e.preventDefault();
+    var list = (p.cover ? [p.cover] : []).concat(p.images);
+    openLB(list, 0, p.title);
+  });
   document.getElementById("lbPrev").addEventListener("click", function () { lbShow(lbI - 1); });
   document.getElementById("lbNext").addEventListener("click", function () { lbShow(lbI + 1); });
   lb.addEventListener("click", function (e) { if (e.target === lb || e.target.classList.contains("lb-stage")) closeLB(); });
