@@ -527,6 +527,13 @@
     '<div class="portfolio-bar inner"><div class="filters" id="filters" role="group" aria-label="카테고리 필터">' + btns + '</div>' +
       '<span class="note-sample">' + D.projects.length + ' projects</span></div>' +
     '<div class="work-grid cols-3" id="pgrid">' + D.projects.map(tile).join("") + '</div>' +
+    // phones: one swipeable row per category, so each category takes about one screen
+    '<div class="pgroups">' + D.categories.map(function (c) {
+      var list = D.projects.filter(function (p) { return p.category === c.id; });
+      if (!list.length) return "";
+      return '<section class="pgroup"><div class="pg-head inner"><h3>' + esc(c.label) + '</h3><span>' + list.length + ' · swipe →</span></div>' +
+        '<div class="pg-row">' + list.map(tile).join("") + '</div></section>';
+    }).join("") + '</div>' +
     cta();
   }
   function bindPortfolio() {

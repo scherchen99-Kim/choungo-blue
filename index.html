@@ -413,6 +413,25 @@ form.brief { display: grid; gap: 28px; }
 .fac-list li span:first-child { opacity: .55; transition: opacity .3s ease; }
 .fac-list li.on span:first-child { opacity: 1; }
 .fac-list li.on { border-bottom-color: #fff !important; }
+/* ---------- touch screens: no hover, so the title sits on a solid strip and the photo stays clear ---------- */
+@media (hover: none) {
+  .tile .ov { inset: auto 0 0 0; background: #000055; padding: 10px 14px 12px; gap: 3px; }
+  .tile .ov h3 { font-size: 16px; }
+}
+/* ---------- phones: portfolio as swipeable rows (one category ≈ one screen) ---------- */
+.pgroups { display: none; }
+@media (max-width: 760px) {
+  .portfolio-bar, #pgrid { display: none !important; }
+  .pgroups { display: block; padding-bottom: 28px; }
+  .pgroup { padding-top: 28px; }
+  .pg-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 14px; }
+  .pg-head h3 { font-family: var(--display); font-weight: 850; font-stretch: 75%; font-size: 28px; line-height: 1; text-transform: uppercase; }
+  .pg-head span { font-family: var(--display); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--grey); }
+  .pg-row, #homeGrid { display: flex !important; overflow-x: auto; scroll-snap-type: x mandatory; gap: 10px; padding: 0 16px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .pg-row::-webkit-scrollbar, #homeGrid::-webkit-scrollbar { display: none; }
+  .pg-row .tile, #homeGrid .tile { flex: 0 0 80vw; scroll-snap-align: center; aspect-ratio: 4 / 3; }
+  #homeGrid + .more-row { display: none; }
+}
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
@@ -464,6 +483,6 @@ form.brief { display: grid; gap: 28px; }
   <div class="lb-bot inner"><span class="label count" id="lbCount"></span><span class="label" style="color:var(--grey)">Sample visual</span></div>
 </div>
 
-<script src="data.js?v=20261121143956"></script>
-<script src="app.js?v=20261121143956"></script>
+<script src="data.js?v=20261121144314"></script>
+<script src="app.js?v=20261121144314"></script>
 </html>
