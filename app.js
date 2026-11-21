@@ -31,8 +31,10 @@
   ];
 
   /* ---------------- Shared fragments ---------------- */
+  var KB = window.CHOUNGO_KB || [];
   function tile(p, i) {
-    return '<a class="tile in" href="#work-' + p.slug + '" data-cat="' + p.category + '" style="animation-delay:' + ((i % 8) * 40) + 'ms">' +
+    var motion = p.category === "web" ? " pan" : (KB.indexOf(p.images[0]) >= 0 ? " kb" : "");
+    return '<a class="tile in' + motion + '" href="#work-' + p.slug + '" data-cat="' + p.category + '" style="animation-delay:' + ((i % 8) * 40) + 'ms">' +
       '<img src="' + p.images[0] + '" alt="' + esc(p.title) + '">' +
       '<span class="ov"><span class="label">' + esc(catLabel[p.category]) + '</span><h3>' + esc(p.title) + '</h3></span></a>';
   }
@@ -57,7 +59,7 @@
         '<div><span class="label">Studio & Factory</span><span class="v">SEOUL — PAJU</span></div>' +
         '<div><span class="label">Email</span><span class="v">' + esc(c.email.toUpperCase()) + '</span></div>' +
       '</div>' +
-      '<div class="foot-bottom"><span class="logo"><span class="logo-word" style="font-size:16px">CHOUNGO BLUE</span></span>' +
+      '<div class="foot-bottom"><span class="logo"><span class="logo-word" style="font-size:16px">CHOUNGO <b>BLUE</b></span></span>' +
         '<span>로고는 임시안입니다.</span>' +
         '<span>© 2026 CHOUNGO BLUE</span></div>' +
     '</div>';
@@ -66,7 +68,9 @@
   /* ---------------- HOME ---------------- */
   var homeOrder = [], homeShown = 0;
   function home() {
-    homeOrder = D.projects.filter(function (p) { return p.category === "web"; }).concat(shuffled(D.projects.filter(function (p) { return p.category !== "web"; })));
+    var webP = D.projects.filter(function (p) { return p.category === "web"; });
+    homeOrder = shuffled(D.projects.filter(function (p) { return p.category !== "web"; }));
+    webP.forEach(function (p, k) { homeOrder.splice(Math.min(homeOrder.length, k * 6), 0, p); });   // slots 0, 6, 12: never next to each other
     homeShown = Math.min(16, homeOrder.length);
     var spotPool = D.projects.filter(function (p) { return p.images.length >= 3; });
     var spot = spotPool[Math.floor(Math.random() * spotPool.length)] || D.projects[0];
@@ -233,9 +237,8 @@
       // CHOUNGO BLUE background: a slow chain of ripple experiments; the ( O ) mark surfaces now and then and dissolves again
       var BG = "#007fff";
       // navy at the top (matches the header bar) flowing into the bright blue
-      var bgG = ctx.createLinearGradient(0, 0, 0, H);
-      bgG.addColorStop(0, "#000055"); bgG.addColorStop(.12, "#000055"); bgG.addColorStop(.62, BG); bgG.addColorStop(1, BG);
-      ctx.fillStyle = bgG; ctx.fillRect(0, 0, W, H);
+      
+      ctx.fillStyle = "#000055"; ctx.fillRect(0, 0, W, H);   // solid navy, same as the inner page headers (no gradient)
       var LOOPS = 64, now = (performance.now() - cbT0) / 1000, sec = now % LOOPS;
       var R = Math.max(46, Math.min(W, H) * .1), r = R * .643, th = R - r, d = R * .63;
       var cx = W / 2, cy = Math.min(H * .34, H / 2 - R * 1.4), cxL = cx - d, cxR = cx + d;
@@ -287,7 +290,7 @@
       //   1 design:   old copy is selected and deleted, the pen tool draws outlines with anchor points, then the fill pours in
       //   2 print:    a screen-print squeegee pulls the new ink across
       //   3 finish:   a laser head cuts the old letters away and leaves the new
-      var cur = cbG[cbCh], prv = cbPrev >= 0 ? cbG[cbPrev] : null, WHITE = "#ffffff", CYAN = "#7fd3ff";
+      var cur = cbG[cbCh], prv = cbPrev >= 0 ? cbG[cbPrev] : null, WHITE = "#ffffff", CYAN = "#095fe0";   // point colour on the navy hero
       function linesOf(g) { return g ? g[0].lines.concat(g[1].lines) : []; }
       function clipX(g, x0, x1) { ctx.save(); ctx.beginPath(); ctx.rect(x0, 0, x1 - x0, H); ctx.clip(); drawText(g, "fill", WHITE); ctx.restore(); }
       function both(fn) { fn(cur[0], 0); fn(cur[1], 1); }
@@ -347,7 +350,7 @@
         if (t < T_SELD) {
           if (prv) { drawText(prv[0], "fill", WHITE); drawText(prv[1], "fill", WHITE); }
           var dp = ease(prog(t, [T_IN, T_DRAG])), cxp = sx0 + (gx0 - 20 - sx0) * dp, cyp = sy0 + (gy0 - 20 - sy0) * dp;
-          if (t > T_IN && t < T_DRAG) { ctx.fillStyle = "rgba(127,211,255,.12)"; ctx.fillRect(cxp, cyp, sx0 - cxp, sy0 - cyp); ctx.setLineDash([5, 4]); ctx.strokeStyle = CYAN; ctx.lineWidth = 1; ctx.strokeRect(cxp, cyp, sx0 - cxp, sy0 - cyp); ctx.setLineDash([]); }
+          if (t > T_IN && t < T_DRAG) { ctx.fillStyle = "rgba(9,95,224,.22)"; ctx.fillRect(cxp, cyp, sx0 - cxp, sy0 - cyp); ctx.setLineDash([5, 4]); ctx.strokeStyle = CYAN; ctx.lineWidth = 1; ctx.strokeRect(cxp, cyp, sx0 - cxp, sy0 - cyp); ctx.setLineDash([]); }
           if (t >= T_DRAG) handles(gx0 - 8, gy0 - 8, gx1 + 8, gy1 + 8);
           var mv = ease(prog(t, [0, T_IN]));
           arrow(t < T_IN ? W * .7 + (sx0 - W * .7) * mv : cxp, t < T_IN ? H * .95 + (sy0 - H * .95) * mv : cyp);
@@ -411,9 +414,8 @@
             var g0 = lt.gi === 0 ? A0 : B0; drawText(g0, "stroke"); ctx.restore();
             var per2 = 2 * (bw + bh), d = per2 * lp, hx, hy;
             if (d < bw) { hx = bx + d; hy = by; } else if (d < bw + bh) { hx = bx + bw; hy = by + d - bw; } else if (d < 2 * bw + bh) { hx = bx + bw - (d - bw - bh); hy = by + bh; } else { hx = bx; hy = by + bh - (d - 2 * bw - bh); }
-            var glow = ctx.createRadialGradient(hx, hy, 0, hx, hy, 26);
-            glow.addColorStop(0, "rgba(255,255,255,1)"); glow.addColorStop(.25, "rgba(150,220,255,.8)"); glow.addColorStop(1, "rgba(150,220,255,0)");
-            ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(hx, hy, 26, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = "rgba(9,95,224,.35)"; ctx.beginPath(); ctx.arc(hx, hy, 18, 0, Math.PI * 2); ctx.fill();   // solid halo, no gradient
+            ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.arc(hx, hy, 5, 0, Math.PI * 2); ctx.fill();
             ctx.strokeStyle = "rgba(200,235,255,.4)"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(hx, 0); ctx.lineTo(hx, hy); ctx.stroke();
             if (!reduce) for (var k = 0; k < 2; k++) sparks.push({ x: hx, y: hy, vx: (Math.random() - .5) * 240, vy: -Math.random() * 200 - 30, life: .4 + Math.random() * .4, age: 0 });
           }
