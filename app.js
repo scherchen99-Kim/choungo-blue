@@ -50,9 +50,9 @@
   window.addEventListener("resize", function () { document.querySelectorAll(".tile.pan").forEach(setPan); });
   function webIdx(p) { return D.projects.filter(function (q) { return q.category === "web"; }).indexOf(p); }   // staggers the web previews
   function tile(p, i) {
-    var motion = p.category === "web" ? " pan" : (KB.indexOf(p.images[0]) >= 0 ? " kb" : "");
+    var motion = p.category === "web" ? " pan" : (!p.cover && KB.indexOf(p.images[0]) >= 0 ? " kb" : "");   // curated covers stay still
     return '<a class="tile in' + motion + '" href="#work-' + p.slug + '" data-cat="' + p.category + '" style="animation-delay:' + ((i % 8) * 40) + 'ms">' +
-      '<img src="' + p.images[0].replace("img/work/", "img/thumb/") + '" alt="' + esc(p.title) + '" loading="lazy" decoding="async"' + (p.category === "web" ? ' style="animation-delay:' + (webIdx(p) * 4.5) + 's"' : '') + '>' +
+      '<img src="' + (p.cover ? p.cover.replace("img/feat/", "img/thumb/feat-") : p.images[0].replace("img/work/", "img/thumb/")) + '" alt="' + esc(p.title) + '" loading="lazy" decoding="async"' + (p.category === "web" ? ' style="animation-delay:' + (webIdx(p) * 4.5) + 's"' : '') + '>' +
       '<span class="ov"><span class="label">' + esc(catLabel[p.category]) + '</span><h3>' + esc(p.title) + '</h3></span></a>';
   }
   function slot(src, name, size, alt) {
@@ -98,8 +98,9 @@
   var homeOrder = [], homeShown = 0;
   function home() {
     var webP = D.projects.filter(function (p) { return p.category === "web"; });
-    homeOrder = shuffled(D.projects.filter(function (p) { return p.category !== "web"; }));
-    webP.forEach(function (p, k) { homeOrder.splice(Math.min(homeOrder.length, k * 6), 0, p); });   // slots 0, 6, 12: never next to each other
+    var bySlug = {}; D.projects.forEach(function (p) { bySlug[p.slug] = p; });
+    homeOrder = (window.CHOUNGO_FEATURED || []).map(function (s) { return bySlug[s]; }).filter(Boolean);
+    webP.forEach(function (p, k) { homeOrder.splice(Math.min(homeOrder.length, k * 4), 0, p); });   // 3-column grid: slots 0, 4, 8 (diagonal, never side by side)
     homeShown = Math.min(16, homeOrder.length);
     var spotPool = D.projects.filter(function (p) { return p.images.length >= 3; });
     var spot = spotPool[Math.floor(Math.random() * spotPool.length)] || D.projects[0];
@@ -126,8 +127,9 @@
 
     '<section>' +
       '<div class="inner sec-head"><div><span class="label">Selected Work</span><h2 class="display">Portfolio</h2></div><a class="link-arrow" href="#portfolio">View all projects</a></div>' +
-      '<div class="work-grid" id="homeGrid">' + homeOrder.slice(0, homeShown).map(tile).join("") + '</div>' +
-      '<div class="more-row inner"><button type="button" class="btn-line" id="moreWork">More work <span id="moreCount"></span></button></div>' +
+      '<div class="work-grid cols-3" id="homeGrid">' + homeOrder.slice(0, homeShown).map(tile).join("") +
+        '<a class="tile tile-all" href="#portfolio"><span>View all<br>projects</span><i>' + D.projects.length + ' works →</i></a>' +
+      '</div>' +
     '</section>' +
 
     '<section class="section dark">' +
