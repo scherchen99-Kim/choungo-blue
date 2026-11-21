@@ -703,7 +703,10 @@
 
   /* ---------------- PORTFOLIO ---------------- */
   var currentFilter = "all";
+  // portfolio page order: shuffled once per visit, so new work can simply be added anywhere in data.js
+  var plist = null;
   function portfolio() {
+    if (!plist) { plist = D.projects.slice(); for (var i = plist.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = plist[i]; plist[i] = plist[j]; plist[j] = t; } }
     var counts = { all: D.projects.length };
     D.projects.forEach(function (p) { counts[p.category] = (counts[p.category] || 0) + 1; });
     var btns = [{ id: "all", label: "All" }].concat(D.categories).map(function (c) {
@@ -717,10 +720,10 @@
     '</section>' +
     '<div class="portfolio-bar inner"><div class="filters" id="filters" role="group" aria-label="카테고리 필터">' + btns + '</div>' +
       '<span class="note-sample">' + D.projects.length + ' projects</span></div>' +
-    '<div class="work-grid cols-3" id="pgrid">' + D.projects.map(tile).join("") + '</div>' +
+    '<div class="work-grid cols-3" id="pgrid">' + plist.map(tile).join("") + '</div>' +
     // phones: one swipeable row per category, so each category takes about one screen
     '<div class="pgroups">' + (function () { var gi = 0; return D.categories.map(function (c) {
-      var list = D.projects.filter(function (p) { return p.category === c.id; });
+      var list = plist.filter(function (p) { return p.category === c.id; });
       if (!list.length) return "";
       return '<section class="pgroup"><div class="pg-head inner"><h3>' + esc(c.label) + '</h3><span>' + list.length + ' works</span></div>' +
         mrow(list, gi++ % 2) + '</section>';
