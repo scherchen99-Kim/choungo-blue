@@ -909,5 +909,10 @@
   document.getElementById("footer").innerHTML = footer();
   window.addEventListener("hashchange", function () { if (lb.classList.contains("open")) closeLB(); render(false); });
   window.addEventListener("scroll", updateHeader, { passive: true });
+  var scrollT = null;   // switch hover effects off while scrolling, back on shortly after
+  window.addEventListener("scroll", function () {
+    if (!scrollT) document.body.classList.add("scrolling");
+    clearTimeout(scrollT); scrollT = setTimeout(function () { document.body.classList.remove("scrolling"); scrollT = null; }, 140);
+  }, { passive: true });
   render(true);
 })();

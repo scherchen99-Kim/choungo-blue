@@ -480,7 +480,10 @@ form.brief { display: grid; gap: 28px; }
 .work-grid .tile > img { inset: -1px; width: calc(100% + 2px) !important; max-width: none; }
 .work-grid .tile:not(.pan) > img { position: absolute; height: calc(100% + 2px) !important; object-fit: cover; }
 .work-grid .tile.pan > img { inset: auto; left: -1px; top: -1px; height: auto !important; }   /* tall page capture: only pin the top-left corner */
-.tile img { backface-visibility: hidden; }
+/* scroll performance: tiles off screen are not rendered at all; only moving pictures get their own GPU layer */
+.work-grid .tile { content-visibility: auto; contain-intrinsic-size: auto 300px; }
+body.scrolling .work-grid { pointer-events: none; }   /* no hover effects firing while the page scrolls under the cursor */
+@media (hover: none) { .tile.kb.live img { animation: none; will-change: auto; } }   /* phones: no slow zoom on every picture */
 .tile.in { animation-fill-mode: backwards; }
 .tile[hidden] { display: none !important; }   /* category filter */
 /* curated covers fill their tile edge to edge */
@@ -572,6 +575,6 @@ form.brief { display: grid; gap: 28px; }
   <div class="lb-bot inner"><span class="label count" id="lbCount"></span><span class="label" style="color:var(--grey)">Sample visual</span></div>
 </div>
 
-<script src="data.js?v=20261121193512"></script>
-<script src="app.js?v=20261121193512"></script>
+<script src="data.js?v=20261121194352"></script>
+<script src="app.js?v=20261121194352"></script>
 </html>
