@@ -355,7 +355,7 @@
         // the pen tool walks each line turning old outlines into new ones -> the fill pours in (outline stays, so weight doesn't jump)
         // select the old copy -> it is deleted -> the corner is dragged out and the new copy appears as a picture (a plate)
         // -> the pen tool traces each letter -> the plate around the letters is cut away and only the letters stay
-        var T_IN = .3, T_DRAG = 1.0, T_DEL = 1.8, T_GROW = 2.6, T_PEN = 3.1, T_A = 4.0, T_B = 4.9, T_CUT = 5.5;   // blurred copy is held ~0.5s before the pen starts
+        var T_IN = .3, T_DRAG = 1.0, T_DEL = 1.7, T_GROW = 2.4, T_PEN = 2.7, T_A = 3.6, T_B = 4.5, T_BK = 4.55, T_CLICK = 4.95, T_FILL = 5.5, T_END = 5.9;   // select → blur → paths over the faint copy → paint bucket fills 100%
         // blurred copy: the letters are drawn small and scaled back up (a real soft blur, works in Safari too), cached per copy
         function offFont(x) { x.font = ctx.font; if ("fontStretch" in x) x.fontStretch = "condensed"; x.textBaseline = "alphabetic"; }
         function blurImg(gs, col) {
@@ -379,10 +379,10 @@
         }
         function haze(gs, col, amount) {
           if (amount <= 0) return;
-          ctx.save(); ctx.globalAlpha = .42 * amount; ctx.imageSmoothingEnabled = true; if ("imageSmoothingQuality" in ctx) ctx.imageSmoothingQuality = "high";
+          ctx.save(); ctx.globalAlpha = .35 * amount; ctx.imageSmoothingEnabled = true; if ("imageSmoothingQuality" in ctx) ctx.imageSmoothingQuality = "high";
           ctx.drawImage(blurImg(gs, col), 0, 0, W, H); ctx.restore();
         }
-        var PLATE = "#007fff", PATH = "#000055";
+        var PATH = "#095fe0";
         var lw = Math.max(1.5, size / 80);
         var oX0 = pad, oY0 = prv ? prv[0].top : cur[0].top, oX1 = pad + (prv ? Math.max(prv[0].width, prv[1].width) : 40), oY1 = prv ? prv[1].bottom : cur[1].bottom;
         var nX0 = pad - size * .06, nY0 = cur[0].top - size * .05, nX1 = pad + Math.max(cur[0].width, cur[1].width) + size * .06, nY1 = cur[1].bottom + size * .06;   // tighter plate, stays clear of the line above
@@ -416,55 +416,67 @@
           ctx.fillStyle = "#fff"; ctx.strokeStyle = PATH; ctx.lineWidth = 1.5;
           outlinePts(g).forEach(function (p) { if (p[0] < x0 || p[0] > x1) return; ctx.fillRect(p[0] - 3.5, p[1] - 3.5, 7, 7); ctx.strokeRect(p[0] - 3.5, p[1] - 3.5, 7, 7); });
         }
+        // marching-ants selection (area only, no fill)
+        function ants(x0, y0, x1, y1, al) {
+          ctx.save(); ctx.globalAlpha = al; ctx.lineWidth = 1.2;
+          ctx.strokeStyle = "#000055"; ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
+          ctx.setLineDash([6, 5]); ctx.lineDashOffset = -t * 18; ctx.strokeStyle = "#ffffff"; ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
+          ctx.restore();
+        }
+        // paint bucket cursor (hotspot = tip of the drip)
+        function bucket(x, y) {
+          ctx.save(); ctx.translate(x, y); ctx.lineWidth = 1.4; ctx.strokeStyle = "#000055"; ctx.fillStyle = "#fff";
+          ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(-3, -5, 0, -9); ctx.quadraticCurveTo(3, -5, 0, 0); ctx.fill(); ctx.stroke();   // drip
+          ctx.translate(13, -17); ctx.rotate(-.75);
+          ctx.beginPath(); ctx.moveTo(-9, -7); ctx.lineTo(9, -7); ctx.lineTo(7, 9); ctx.lineTo(-7, 9); ctx.closePath(); ctx.fill(); ctx.stroke();   // body
+          ctx.beginPath(); ctx.ellipse(0, -7, 9, 2.6, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();   // mouth
+          ctx.lineWidth = 2; ctx.strokeStyle = "#fff"; ctx.beginPath(); ctx.arc(0, -7, 11, Math.PI * 1.05, Math.PI * 1.95); ctx.stroke();   // handle
+          ctx.restore();
+        }
         if (t < T_DEL) {
-          // 1) marquee-select the old copy
+          // 1) marquee-select the old copy, it goes soft
           var soft = ease(prog(t, [T_DRAG + .1, T_DEL]));
           if (prv) {
             ctx.globalAlpha = 1 - soft; drawText(prv[0], "fill", PRV); drawText(prv[1], "fill", PRV); ctx.globalAlpha = 1;
             haze([prv[0], prv[1]], PRV, Math.min(1, soft * 3));
           }
           var dp = ease(prog(t, [T_IN, T_DRAG])), cxp = sx0 + (oX0 - 20 - sx0) * dp, cyp = sy0 + (oY0 - 20 - sy0) * dp;
-          if (t > T_IN && t < T_DRAG) { ctx.fillStyle = "rgba(9,95,224,.22)"; ctx.fillRect(cxp, cyp, sx0 - cxp, sy0 - cyp); ctx.setLineDash([5, 4]); ctx.strokeStyle = CYAN; ctx.lineWidth = 1; ctx.strokeRect(cxp, cyp, sx0 - cxp, sy0 - cyp); ctx.setLineDash([]); }
-          if (t >= T_DRAG) handles(oX0 - 8, oY0 - 8, oX1 + 8, oY1 + 8);
+          if (t > T_IN && t < T_DRAG) ants(cxp, cyp, sx0, sy0, 1);
+          if (t >= T_DRAG) ants(oX0 - 12, oY0 - 12, oX1 + 12, oY1 + 12, 1);
           var mv = ease(prog(t, [0, T_IN]));
-          arrow(t < T_IN ? W * .7 + (sx0 - W * .7) * mv : (t < T_DRAG ? cxp : oX1 + 8), t < T_IN ? H * .95 + (sy0 - H * .95) * mv : (t < T_DRAG ? cyp : oY1 + 8));
+          arrow(t < T_IN ? W * .7 + (sx0 - W * .7) * mv : (t < T_DRAG ? cxp : oX1 + 12), t < T_IN ? H * .95 + (sy0 - H * .95) * mv : (t < T_DRAG ? cyp : oY1 + 12));
         } else {
-          // 2) old copy deleted; drag the corner out — the plate (new copy as a picture) grows with the box
+          // 2) the selection is dragged out; the blurred old copy turns into the blurred, faint new copy
           var gp = ease(prog(t, [T_DEL, T_GROW]));
-          var bx0 = oX0 + (nX0 - oX0) * gp, by0 = oY0 + (nY0 - oY0) * gp, bx1 = oX1 + (nX1 - oX1) * gp, by1 = oY1 + (nY1 - oY1) * gp;
-          var cut = ease(prog(t, [T_B + .15, T_CUT]));
-          if (cut < 1) {
-            ctx.save(); ctx.beginPath(); ctx.rect(bx0, by0, bx1 - bx0, by1 - by0); ctx.clip();
-            ctx.globalAlpha = 1 - cut; ctx.fillStyle = PLATE; ctx.fillRect(bx0, by0, bx1 - bx0, by1 - by0);
-            // blurred first copy turns into the blurred second copy, both faint
-            var morph = ease(prog(t, [T_DEL, T_GROW]));
-            if (prv) haze([prv[0], prv[1]], WHITE, (1 - morph) * (1 - cut));
-            // the blur stays only where the pen hasn't been yet (no glow left around traced letters)
-            var midY = (cur[0].bottom + cur[1].top) / 2;
-            ctx.beginPath(); ctx.rect(0, 0, W, H);
-            [[0, T_PEN, T_A, 0, midY], [1, T_A, T_B, midY, H]].forEach(function (d) {
-              var g = cur[d[0]], ox = pad - 6 + (g.width + 12) * ease(prog(t, [d[1], d[2]]));
-              if (t > d[1]) ctx.rect(0, d[3], ox + size * .08, d[4] - d[3]);
-            });
-            ctx.clip("evenodd");
-            haze([cur[0], cur[1]], CUR, morph * (1 - cut));
-            ctx.globalAlpha = 1;
-            ctx.restore();
-          } else { drawText(cur[0], "fill", CUR); drawText(cur[1], "fill", CUR); }
-          if (t < T_PEN) handles(bx0 - 8, by0 - 8, bx1 + 8, by1 + 8);
-          if (t < T_GROW + .15) arrow(bx1 + 8, by1 + 8);
-          // 3) pen tool traces the letter outlines, line by line
+          var bx0 = oX0 - 12 + (nX0 - oX0) * gp, by0 = oY0 - 12 + (nY0 - oY0) * gp, bx1 = oX1 + 12 + (nX1 - oX1) * gp, by1 = oY1 + 12 + (nY1 - oY1) * gp;
+          var fill = ease(prog(t, [T_CLICK, T_FILL])), pathA = 1 - ease(prog(t, [T_FILL, T_END]));
+          var kx = pad + cur[0].width * .32, ky = (cur[0].top + cur[0].bottom) / 2;   // where the bucket clicks
+          var kR = fill * Math.hypot(Math.max(kx - nX0, nX1 - kx), Math.max(ky - nY0, nY1 - ky));
+          ctx.save();
+          if (fill > 0) { ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.arc(kx, ky, kR, 0, Math.PI * 2); ctx.clip("evenodd"); }
+          if (prv) haze([prv[0], prv[1]], PRV, 1 - gp);
+          haze([cur[0], cur[1]], CUR, gp);
+          ctx.restore();
+          // 4) paint bucket: 100% colour floods out from the click
+          if (fill > 0) { ctx.save(); ctx.beginPath(); ctx.arc(kx, ky, kR, 0, Math.PI * 2); ctx.clip(); drawText(cur[0], "fill", CUR); drawText(cur[1], "fill", CUR); ctx.restore(); }
+          if (pathA > 0) ants(bx0, by0, bx1, by1, pathA);
+          if (t < T_GROW + .15) arrow(bx1, by1);
+          // 3) pen tool traces every letter over the faint blur (no fill yet)
           var penX = null, penY = null;
           [[0, T_PEN, T_A], [1, T_A, T_B]].forEach(function (d) {
             var g = cur[d[0]], pp = ease(prog(t, [d[1], d[2]])), ox = pad - 6 + (g.width + 12) * pp;
-            if (pp <= 0 || cut >= 1) return;
-            if (cut < 1) clipX(g, 0, ox);   // where the path is cut, the letter becomes crisp and clean
-            ctx.save(); ctx.globalAlpha = 1 - cut; ctx.beginPath(); ctx.rect(0, 0, ox, H); ctx.clip();
+            if (pp <= 0 || pathA <= 0) return;
+            ctx.save(); ctx.globalAlpha = pathA; ctx.beginPath(); ctx.rect(0, 0, ox, H); ctx.clip();
             ctx.lineWidth = lw; ctx.strokeStyle = PATH; drawText(g, "stroke"); ctx.restore();
-            if (cut <= 0) anchorsFor(g, pad, ox);
+            ctx.save(); ctx.globalAlpha = pathA; anchorsFor(g, pad - 10, ox); ctx.restore();
             if (pp < 1) { penX = ox; penY = g.top + (g.bottom - g.top) * (.5 + .35 * Math.sin(t * 9)); }
           });
           if (penX !== null) penIcon(penX, penY);
+          if (t >= T_BK && t < T_FILL + .2) {
+            var bm = ease(prog(t, [T_BK, T_CLICK])), sx = pad + cur[1].width + 20, sy = (cur[1].top + cur[1].bottom) / 2;
+            var dip = t > T_CLICK && t < T_CLICK + .12 ? 3 : 0;
+            bucket(sx + (kx - sx) * bm, sy + (ky - sy) * bm + dip);
+          }
         }
       } else {
         var A0 = cur[0], B0 = cur[1], O0 = prv ? prv[0] : null, O1 = prv ? prv[1] : null;
