@@ -463,7 +463,12 @@ form.brief { display: grid; gap: 28px; }
   .fac-wrap .specs, .fac-wrap .spec-note { display: none; }
 }
 /* scroll performance: each tile paints on its own layer, entrance fade only once */
-.tile { contain: layout paint; transform: translateZ(0); }
+.tile { contain: paint; }
+/* no hairlines between tiles: each tile overlaps its neighbours by 1px and its picture bleeds 1px past the edge */
+.work-grid .tile { margin: 0 -1px -1px 0; }
+.work-grid .tile > img { inset: -1px; width: calc(100% + 2px) !important; max-width: none; }
+.work-grid .tile:not(.pan) > img { position: absolute; height: calc(100% + 2px) !important; object-fit: cover; }
+.work-grid .tile.pan > img { inset: auto; left: -1px; top: -1px; height: auto !important; }   /* tall page capture: only pin the top-left corner */
 .tile img { backface-visibility: hidden; }
 .tile.in { animation-fill-mode: backwards; }
 .tile[hidden] { display: none !important; }   /* category filter */
@@ -544,6 +549,6 @@ form.brief { display: grid; gap: 28px; }
   <div class="lb-bot inner"><span class="label count" id="lbCount"></span><span class="label" style="color:var(--grey)">Sample visual</span></div>
 </div>
 
-<script src="data.js?v=20261121154102"></script>
-<script src="app.js?v=20261121154102"></script>
+<script src="data.js?v=20261121155105"></script>
+<script src="app.js?v=20261121155105"></script>
 </html>
