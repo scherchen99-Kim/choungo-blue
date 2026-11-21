@@ -381,8 +381,15 @@
           var cut = ease(prog(t, [T_B + .15, T_CUT]));
           if (cut < 1) {
             ctx.save(); ctx.beginPath(); ctx.rect(bx0, by0, bx1 - bx0, by1 - by0); ctx.clip();
-            ctx.globalAlpha = 1 - cut; ctx.fillStyle = PLATE; ctx.fillRect(bx0, by0, bx1 - bx0, by1 - by0); ctx.globalAlpha = 1;
-            drawText(cur[0], "fill", CUR); drawText(cur[1], "fill", CUR);
+            ctx.globalAlpha = 1 - cut; ctx.fillStyle = PLATE; ctx.fillRect(bx0, by0, bx1 - bx0, by1 - by0);
+            // the new copy arrives soft and blurry inside the picture (drawn as a halo of faint copies, works in every browser)
+            var br = Math.max(4, size * .06);
+            for (var bk = 0; bk < 14; bk++) {
+              var an = bk / 14 * Math.PI * 2, rr3 = br * (bk % 2 ? 1 : .55);
+              ctx.save(); ctx.translate(Math.cos(an) * rr3, Math.sin(an) * rr3); ctx.globalAlpha = (1 - cut) * .14;
+              drawText(cur[0], "fill", CUR); drawText(cur[1], "fill", CUR); ctx.restore();
+            }
+            ctx.globalAlpha = 1;
             ctx.restore();
           } else { drawText(cur[0], "fill", CUR); drawText(cur[1], "fill", CUR); }
           if (t < T_A - .9) handles(bx0 - 8, by0 - 8, bx1 + 8, by1 + 8);
@@ -392,6 +399,7 @@
           [[0, T_GROW + .1, T_A], [1, T_A, T_B]].forEach(function (d) {
             var g = cur[d[0]], pp = ease(prog(t, [d[1], d[2]])), ox = pad - 6 + (g.width + 12) * pp;
             if (pp <= 0 || cut >= 1) return;
+            if (cut < 1) clipX(g, 0, ox);   // where the path is cut, the letter becomes crisp and clean
             ctx.save(); ctx.globalAlpha = 1 - cut; ctx.beginPath(); ctx.rect(0, 0, ox, H); ctx.clip();
             ctx.lineWidth = lw; ctx.strokeStyle = PATH; drawText(g, "stroke"); ctx.restore();
             if (cut <= 0) anchorsFor(g, pad, ox);
