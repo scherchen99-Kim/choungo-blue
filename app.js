@@ -161,7 +161,7 @@
     if (fxPtr.clk && fxPtr.clk !== f.clk) {
       f.clk = fxPtr.clk; var cx = fxPtr.cx - f.rl, cy = fxPtr.cy - f.rt;
       f.moles = f.moles.filter(function (m) {
-        if (Math.hypot(cx - m.x, cy - m.y) > (W < 760 ? 34 : 28)) return true;
+        if (Math.hypot(cx - m.x, cy - m.y) > (W < 760 ? 36 : 30)) return true;   // the whole blob counts
         f.got[m.col] = true; f.splash.push({ x: m.x, y: m.y, col: m.col, t0: tt }); f.next = tt + .6;
         if (ORDER.every(function (q) { return f.got[q]; })) {   // all four inks: full-colour print, "We make it." becomes "We make win!"
           f.win = tt;
@@ -197,9 +197,12 @@
     }
     // the moles themselves
     f.moles.forEach(function (m) {
-      var u = (tt - m.t0) / m.dur, pop = u < .15 ? u / .15 : u > .8 ? (1 - u) / .2 : 1, rr = 1 + 7 * pop;
-      c.fillStyle = INK[m.col]; c.beginPath(); c.arc(m.x, m.y, rr, 0, 6.2832); c.fill();
-      if (m.col === "K") { c.strokeStyle = "rgba(255,255,255,.55)"; c.lineWidth = 1; c.stroke(); }
+      // one ink dot with a soft, blurred edge (stacked faint rings, no gradient), a little bigger than the screen dots
+      var u = (tt - m.t0) / m.dur, pop = u < .15 ? u / .15 : u > .8 ? (1 - u) / .2 : 1, rr = (W < 760 ? 6 : 8) * pop + .5;
+      c.fillStyle = m.col === "K" ? "#000000" : INK[m.col];
+      for (var lay = 6; lay >= 1; lay--) { c.globalAlpha = .13 * pop; c.beginPath(); c.arc(m.x, m.y, rr + lay * 2.4 * pop, 0, 6.2832); c.fill(); }
+      c.globalAlpha = .92; c.beginPath(); c.arc(m.x, m.y, rr, 0, 6.2832); c.fill(); c.globalAlpha = 1;
+      if (m.col === "K") { c.strokeStyle = "rgba(255,255,255,.3)"; c.lineWidth = 1; c.beginPath(); c.arc(m.x, m.y, rr + 1, 0, 6.2832); c.stroke(); }
     });
     // the C M Y K tally, bottom right
     c.font = "700 10px ui-monospace, Menlo, monospace"; c.textAlign = "center"; c.textBaseline = "middle";
