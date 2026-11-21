@@ -705,8 +705,27 @@
   var currentFilter = "all";
   // portfolio page order: shuffled once per visit, so new work can simply be added anywhere in data.js
   var plist = null;
+  // look-alike work (posters, web pages) never sits next to or right under another one, in 1-, 2- or 3-column layouts
+  function lookKey(p) { return p.type === "POSTER" ? "poster" : p.category === "web" ? "web" : ""; }
+  function spread(list, colsList) {
+    var out = [], rest = list.slice();
+    function ok(p, pos) {
+      var k = lookKey(p); if (!k) return true;
+      return colsList.every(function (c) {
+        var n = [pos - c]; if (pos % c) n.push(pos - 1);
+        return n.every(function (q) { return q < 0 || lookKey(out[q]) !== k; });
+      });
+    }
+    var forced = false;
+    while (rest.length) { var i = 0; while (i < rest.length && !ok(rest[i], out.length)) i++; if (i === rest.length) { i = 0; forced = true; } out.push(rest.splice(i, 1)[0]); }
+    out.forced = forced;
+    return out;
+  }
   function portfolio() {
-    if (!plist) { plist = D.projects.slice(); for (var i = plist.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = plist[i]; plist[i] = plist[j]; plist[j] = t; } }
+    for (var tries = 0; !plist || (plist.forced && tries < 40); tries++) {   // reshuffle until nothing look-alike touches
+      plist = D.projects.slice(); for (var i = plist.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = plist[i]; plist[i] = plist[j]; plist[j] = t; }
+      plist = spread(plist, [1, 2, 3]);
+    }
     var counts = { all: D.projects.length };
     D.projects.forEach(function (p) { counts[p.category] = (counts[p.category] || 0) + 1; });
     var btns = [{ id: "all", label: "All" }].concat(D.categories).map(function (c) {
@@ -723,7 +742,7 @@
     '<div class="work-grid cols-3" id="pgrid">' + plist.map(tile).join("") + '</div>' +
     // phones: one swipeable row per category, so each category takes about one screen
     '<div class="pgroups">' + (function () { var gi = 0; return D.categories.map(function (c) {
-      var list = plist.filter(function (p) { return p.category === c.id; });
+      var list = spread(plist.filter(function (p) { return p.category === c.id; }), [1]);
       if (!list.length) return "";
       return '<section class="pgroup"><div class="pg-head inner"><h3>' + esc(c.label) + '</h3><span>' + list.length + ' works</span></div>' +
         mrow(list, gi++ % 2) + '</section>';
