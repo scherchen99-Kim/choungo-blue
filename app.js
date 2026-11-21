@@ -16,10 +16,10 @@
     ["Editorial Design", "카탈로그, 브로슈어, 편집디자인", "정보가 많은 카탈로그도 읽기 쉬운 구조로 정리합니다. 인쇄 사양과 후가공까지 함께 설계합니다.", "Graphic & Print"],
     ["POP Design", "매장 내 판매촉진 광고물", "계산대, 매대, 진열장 앞에서 구매를 이끄는 POP를 기획하고 직접 제작합니다.", "POP & POSM"],
     ["POSM Design", "진열 및 판매촉진 제작물", "FSDU, 카운터 디스플레이, 쉘프 토퍼와 워블러까지 매장 운영 방식에 맞춰 설계합니다.", "POP & POSM"],
-    ["VMD Design", "비주얼 머천다이징, 매장 연출", "윈도우와 매장 동선, 진열 높이까지 고려해 제품이 가장 잘 보이는 장면을 만듭니다.", "Display & VMD"],
+    ["Brand Design", "브랜드 아이덴티티, 로고·CI", "로고와 컬러, 서체, 사용 규정까지 브랜드의 얼굴을 설계하고 매장과 인쇄물, 웹에 일관되게 적용합니다.", "Branding"],
     ["Promotion Design", "각종 프로모션 디자인", "시즌 캠페인과 행사, 팝업까지 짧은 기간에 많은 매장으로 퍼지는 프로모션을 준비합니다.", "POP & POSM"],
     ["Sign Design", "사인물, 옥내외 광고물", "채널 사인, 라이트박스, 안내 사인 체계까지 낮과 밤 모두에서 읽히는 사인을 만듭니다.", "Signage"],
-    ["Display Design", "제품 디스플레이", "아크릴, 우드, 금속을 조합해 제품의 형태와 가격대에 맞는 진열 구조를 만듭니다.", "Display & VMD"],
+    ["Web Design", "홈페이지, 반응형 웹", "기업 홈페이지와 브랜드 사이트를 기획부터 디자인, 반응형 구축까지 진행합니다.", "Web Design"],
     ["Interior Design", "상업공간 디자인 및 시공", "팝업 스토어와 쇼룸, 매장 인테리어를 설계부터 시공까지 한 팀이 책임집니다.", "Display & VMD"]
   ];
   var STEPS = [
@@ -32,10 +32,11 @@
 
   /* ---------------- Shared fragments ---------------- */
   var KB = window.CHOUNGO_KB || [];
+  function webIdx(p) { return D.projects.filter(function (q) { return q.category === "web"; }).indexOf(p); }   // staggers the web previews
   function tile(p, i) {
     var motion = p.category === "web" ? " pan" : (KB.indexOf(p.images[0]) >= 0 ? " kb" : "");
     return '<a class="tile in' + motion + '" href="#work-' + p.slug + '" data-cat="' + p.category + '" style="animation-delay:' + ((i % 8) * 40) + 'ms">' +
-      '<img src="' + p.images[0] + '" alt="' + esc(p.title) + '">' +
+      '<img src="' + p.images[0] + '" alt="' + esc(p.title) + '"' + (p.category === "web" ? ' style="animation-delay:' + (webIdx(p) * 4.5) + 's"' : '') + '>' +
       '<span class="ov"><span class="label">' + esc(catLabel[p.category]) + '</span><h3>' + esc(p.title) + '</h3></span></a>';
   }
   function slot(src, name, size, alt) {
@@ -65,6 +66,18 @@
     '</div>';
   }
 
+  var facTimer = 0;
+  function bindFacRot() {
+    clearInterval(facTimer);
+    var imgs = document.querySelectorAll(".fac-rot img"), rows = document.querySelectorAll(".fac-list li"), cur = 0, hold = false;
+    if (!imgs.length) return;
+    function show(i) { cur = i; imgs.forEach(function (im, k) { im.classList.toggle("on", k === i); }); rows.forEach(function (r, k) { r.classList.toggle("on", k === i); }); }
+    rows.forEach(function (r) {
+      r.addEventListener("mouseenter", function () { hold = true; show(+r.getAttribute("data-i")); });
+      r.addEventListener("mouseleave", function () { hold = false; });
+    });
+    facTimer = setInterval(function () { if (!hold) show((cur + 1) % imgs.length); }, 3200);
+  }
   /* ---------------- HOME ---------------- */
   var homeOrder = [], homeShown = 0;
   function home() {
@@ -111,7 +124,7 @@
     '</section>' +
 
     '<section class="section inner">' +
-      '<span class="label" style="color:var(--grey);display:block;margin-bottom:20px">How we work</span>' +
+      '<span class="label" style="color:var(--grey);display:block;margin-bottom:20px;text-align:center">How we work</span>' +
       '<h2 class="display process-title">One-stop<span>creative production.</span></h2>' +
       '<ol class="steps">' + STEPS.map(function (s, i) {
         return '<li><span class="no">' + pad(i + 1) + '</span><h3>' + esc(s[0]) + '</h3><p>' + esc(s[1]) + '</p></li>';
@@ -119,12 +132,12 @@
     '</section>' +
 
     '<section class="split dark">' +
-      '<div class="media">' + slot("", "home-factory.jpg", "1600 × 1200", "제작센터") + '</div>' +
+      '<div class="media fac-rot">' + D.facilities.map(function (f, i) { return '<img src="' + f.image + '" alt="' + esc(f.nameKo) + '"' + (i ? '' : ' class="on"') + '>'; }).join("") + '</div>' +
       '<div class="body inner">' +
         '<span class="label" style="color:var(--grey)">In-house production</span>' +
         '<h2 class="display">We build<br>what we design.</h2>' +
         '<p style="color:#a3a3a0;max-width:460px">샘플 하나부터 전국 매장 롤아웃까지. 자체 제작센터에서 출력, 가공, 조립을 직접 진행합니다.</p>' +
-        '<ul class="eq-list">' + D.facilities.map(function (f) { return '<li><span>' + esc(f.name) + '</span><span>' + esc(f.nameKo) + '</span></li>'; }).join("") + '</ul>' +
+        '<ul class="eq-list fac-list">' + D.facilities.map(function (f, i) { return '<li data-i="' + i + '"' + (i ? '' : ' class="on"') + '><span>' + esc(f.name) + '</span><span>' + esc(f.nameKo) + '</span></li>'; }).join("") + '</ul>' +
         '<p><a class="link-arrow" href="#facilities">Facilities</a></p>' +
       '</div>' +
     '</section>' +
@@ -488,7 +501,7 @@
       }).join("") + '</div>' +
     '</section>' +
     '<section class="section paper inner">' +
-      '<span class="label" style="color:var(--grey);display:block;margin-bottom:20px">Process</span>' +
+      '<span class="label" style="color:var(--grey);display:block;margin-bottom:20px;text-align:center">Process</span>' +
       '<h2 class="display process-title">From idea<span>to in-store.</span></h2>' +
       '<ol class="steps">' + STEPS.map(function (s, i) {
         return '<li><span class="no">' + pad(i + 1) + '</span><h3>' + esc(s[0]) + '</h3><p>' + esc(s[1]) + '</p></li>';
@@ -586,7 +599,7 @@
       '<h1 class="display" style="margin-top:20px">Production<br>floor.</h1>' +
       '<div class="row"><span></span><p>디자인 스튜디오와 함께 자체 제작센터를 운영합니다. 인쇄, 가공, 조립을 직접 하기 때문에 샘플 확인이 빠르고, 디자인 의도를 양산 단계까지 지킬 수 있습니다.</p></div>' +
     '</section>' +
-    '<div class="fac-band">' + slot("", "facilities-top.jpg", "2400 × 1050", "제작센터") + '</div>' +
+    '<div class="fac-band">' + slot("img/fac/facilities-top.jpg", "facilities-top.jpg", "2400 × 1050", "제작센터") + '</div>' +
     '<section>' + D.facilities.map(function (f, i) {
       return '<article class="fac">' +
         (f.image ? '<button type="button" class="media" data-i="' + i + '" aria-label="' + esc(f.nameKo) + ' 이미지 확대"><img src="' + f.image + '" alt="' + esc(f.nameKo) + '"></button>' : '<div class="media">' + slot("", "fac-" + f.id + ".jpg", "1600 × 1000", f.nameKo) + '</div>') +
@@ -732,7 +745,7 @@
       // hero pages keep a transparent header at top
       routeName = (R.r === "home") ? "home" : (R.r === "work" ? "home" : R.r);
       updateHeader();
-      if (R.r === "home") { startHero(); bindHomeGrid(); }
+      if (R.r === "home") { startHero(); bindHomeGrid(); bindFacRot(); }
       if (R.r === "portfolio") bindPortfolio();
       if (R.r === "work") bindGallery(R.slug);
       if (R.r === "facilities") bindFacilities();

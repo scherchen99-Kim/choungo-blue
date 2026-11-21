@@ -91,7 +91,7 @@ window.CHOUNGO_DATA = {
       id: "laser",
       name: "Laser Cutting",
       nameKo: "레이저 커팅기",
-      image: "",
+      image: "img/fac/fac-laser.jpg",
       desc: "400W급 RF 발진기를 쓰는 대형 레이저 커팅기입니다. 두께 20–30mm 소재까지 절단하고, 볼트식 클램프로 소재를 고정해 뒤틀림 없이 가공합니다.",
       specs: [["출력", "400W급 RF 발진기"], ["가공 두께", "20 – 30 mm"], ["주요 소재", "아크릴 · 목재 · MDF · 유리 · 원단 · 종이 · 가죽 · 고무"]],
       model: ["FC-400RB (동부하이텍)"]
@@ -100,7 +100,7 @@ window.CHOUNGO_DATA = {
       id: "cnc",
       name: "CNC Routing",
       nameKo: "CNC 멀티 라우터",
-      image: "",
+      image: "img/fac/fac-cnc.jpg",
       desc: "공구 자동 교환(ATC) 장치를 갖춘 멀티 라우터로 절단과 조각을 한 번에 처리합니다. 아크릴 같은 경질 소재부터 폼보드, 골판지, 스펀지 같은 연질 소재까지 깔끔하게 가공합니다.",
       specs: [["방식", "ATC 장착 멀티 라우터"], ["가공", "절단 · 조각"], ["주요 소재", "아크릴 · 폼보드 · 골판지 · 스펀지 · 목재"]],
       model: ["FA-LA2500 (동부하이텍)"]
@@ -109,7 +109,7 @@ window.CHOUNGO_DATA = {
       id: "fabrication",
       name: "Panel Cutting & Fabrication",
       nameKo: "정밀 재단 · 아크릴 가공",
-      image: "",
+      image: "img/fac/fac-fabrication.jpg",
       desc: "고정밀 스핀들 재단기로 판재를 정확한 직각으로 자릅니다. 루터, 대패, 횡절단기, 탁상드릴, 경면기로 아크릴과 목재 부품을 다듬고 조립까지 마칩니다.",
       specs: [["재단", "정밀 판재 재단기"], ["가공 설비", "대형·소형 루터 · 대패 · 횡절단기 · 탁상드릴"], ["마감", "경면기 (아크릴 단면 광택)"]],
       model: ["재단기 MSW-48 (미림테크)", "루터 RM-701 · DJ2150T2", "대패 1804N · 드릴 KMT-400B6"]
@@ -118,7 +118,7 @@ window.CHOUNGO_DATA = {
       id: "print",
       name: "Large Format Printing",
       nameKo: "대형 실사출력",
-      image: "",
+      image: "img/fac/fac-print.jpg",
       desc: "솔벤트, 안료, 오일 잉크 출력기를 모두 갖춰 실내 POP용 고해상도 출력부터 외부 대형 현수막까지 소재와 용도에 맞게 출력합니다.",
       specs: [["솔벤트", "폭 1.5 – 1.8 m · 4–6색 720dpi · Flex, PVC, Mesh, 배너"], ["안료", "폭 1.5 – 1.8 m · 6색 최대 1440×1440dpi · PET배너, 인화지, 합성지"], ["오일", "폭 1.8 m · 6색 720dpi · 외부 대형 현수막"]],
       model: ["TS34-1800A", "HP 9000S", "Thunder Jet", "XF-640", "FJ-740", "HP DesignJet 6100", "Dura Jet-1904T"]
@@ -127,7 +127,7 @@ window.CHOUNGO_DATA = {
       id: "finishing",
       name: "Finishing",
       nameKo: "후가공 · 코팅",
-      image: "",
+      image: "img/fac/fac-finishing.jpg",
       desc: "출력물은 자동·수동 코팅기로 표면을 보호하고, 시트 커팅기와 스피드컷 재단기로 정확하게 잘라 바로 포장과 납품으로 넘깁니다.",
       specs: [["코팅", "자동 코팅기 2대 · 수동 코팅기"], ["재단", "시트 커팅기 (120) · 스피드컷 재단기"], ["설비", "냉동식 에어 드라이어 · 컴프레서"]],
       model: []
