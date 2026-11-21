@@ -459,7 +459,7 @@
           ctx.restore();
           // 4) paint bucket: 100% colour floods out from the click
           if (fill > 0) { ctx.save(); ctx.beginPath(); ctx.arc(kx, ky, kR, 0, Math.PI * 2); ctx.clip(); drawText(cur[0], "fill", CUR); drawText(cur[1], "fill", CUR); ctx.restore(); }
-          if (pathA > 0) ants(bx0, by0, bx1, by1, pathA);
+          var antA = 1 - ease(prog(t, [T_GROW + .05, T_PEN])); if (antA > 0) ants(bx0, by0, bx1, by1, antA);   // selection goes away before the pen starts
           if (t < T_GROW + .15) arrow(bx1, by1);
           // 3) pen tool traces every letter over the faint blur (no fill yet)
           var penX = null, penY = null;
