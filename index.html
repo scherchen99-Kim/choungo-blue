@@ -135,9 +135,10 @@ p { margin: 0; }
 @media (hover: none) { .tile .ov { opacity: 1; } .tile .ov h3, .tile .ov .label { transform: none; } }
 @media (max-width: 1100px) { .work-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .work-grid.cols-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 560px) { .work-grid, .work-grid.cols-3 { grid-template-columns: 1fr; } }
-.tile.pan img { object-fit: cover; object-position: 50% 0%; animation: tilePan 38s ease-in-out infinite alternate both; }
-@keyframes tilePan { 0%, 7% { object-position: 50% 0%; } 93%, 100% { object-position: 50% 100%; } }   /* holds the top (with its menu) ~2.7s before scrolling */
-.tile.kb img { animation: tileKb 16s ease-in-out infinite alternate; }
+.tile.pan img { position: absolute; top: 0; left: 0; width: 100%; height: auto; object-fit: initial; will-change: transform; }
+.tile.pan.live img { animation: tilePan 38s ease-in-out infinite alternate both; }
+@keyframes tilePan { 0%, 7% { transform: translateY(0); } 93%, 100% { transform: translateY(var(--pan, 0px)); } }   /* holds the top (with its menu) ~2.7s before scrolling */
+.tile.kb.live img { animation: tileKb 16s ease-in-out infinite alternate; will-change: transform; }
 @keyframes tileKb { from { transform: scale(1); } to { transform: scale(1.12); } }
 .tile.pan, .tile.kb { }
 .tile.out { opacity: 0; transform: scale(.98); transition: opacity .25s ease, transform .25s ease; }
@@ -530,6 +531,6 @@ form.brief { display: grid; gap: 28px; }
   <div class="lb-bot inner"><span class="label count" id="lbCount"></span><span class="label" style="color:var(--grey)">Sample visual</span></div>
 </div>
 
-<script src="data.js?v=20261121145255"></script>
-<script src="app.js?v=20261121145255"></script>
+<script src="data.js?v=20261121145608"></script>
+<script src="app.js?v=20261121145608"></script>
 </html>

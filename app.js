@@ -32,11 +32,27 @@
 
   /* ---------------- Shared fragments ---------------- */
   var KB = window.CHOUNGO_KB || [];
+  var tileIO = "IntersectionObserver" in window ? new IntersectionObserver(function (es) {
+    es.forEach(function (e) { e.target.classList.toggle("live", e.isIntersecting); });
+  }, { rootMargin: "120px 0px" }) : null;
+  function setPan(t) {
+    var im = t.querySelector("img"); if (!im) return;
+    var go = function () { var d = im.offsetHeight - t.clientHeight; t.style.setProperty("--pan", (d > 0 ? -d : 0) + "px"); };
+    if (im.complete) go(); else im.addEventListener("load", go, { once: true });
+  }
+  function watchTiles(root) {
+    (root || document).querySelectorAll(".tile").forEach(function (t) {
+      if (t.dataset.w) return; t.dataset.w = "1";
+      if (tileIO) tileIO.observe(t); else t.classList.add("live");
+      if (t.classList.contains("pan")) setPan(t);
+    });
+  }
+  window.addEventListener("resize", function () { document.querySelectorAll(".tile.pan").forEach(setPan); });
   function webIdx(p) { return D.projects.filter(function (q) { return q.category === "web"; }).indexOf(p); }   // staggers the web previews
   function tile(p, i) {
     var motion = p.category === "web" ? " pan" : (KB.indexOf(p.images[0]) >= 0 ? " kb" : "");
     return '<a class="tile in' + motion + '" href="#work-' + p.slug + '" data-cat="' + p.category + '" style="animation-delay:' + ((i % 8) * 40) + 'ms">' +
-      '<img src="' + p.images[0] + '" alt="' + esc(p.title) + '"' + (p.category === "web" ? ' style="animation-delay:' + (webIdx(p) * 4.5) + 's"' : '') + '>' +
+      '<img src="' + p.images[0].replace("img/work/", "img/thumb/") + '" alt="' + esc(p.title) + '" loading="lazy" decoding="async"' + (p.category === "web" ? ' style="animation-delay:' + (webIdx(p) * 4.5) + 's"' : '') + '>' +
       '<span class="ov"><span class="label">' + esc(catLabel[p.category]) + '</span><h3>' + esc(p.title) + '</h3></span></a>';
   }
   function slot(src, name, size, alt) {
@@ -155,6 +171,7 @@
     btn.addEventListener("click", function () {
       var next = homeOrder.slice(homeShown, homeShown + 8);
       grid.insertAdjacentHTML("beforeend", next.map(tile).join(""));
+      watchTiles(grid);
       homeShown += next.length;
       upd();
     });
@@ -197,7 +214,7 @@
     }
     function layout() {
       var r = cv.getBoundingClientRect();
-      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      dpr = Math.min(window.devicePixelRatio || 1, 1.5);
       W = r.width; H = r.height;
       var nw = Math.round(W * dpr), nh = Math.round(H * dpr);
       if (cv.width !== nw) cv.width = nw; if (cv.height !== nh) cv.height = nh; // resetting the size clears the canvas, so only do it on a real change
@@ -445,7 +462,10 @@
       });
     }
     var start = performance.now(), last = start;
+    var heroOn = true, heroEl2 = document.getElementById("hero");
+    if ("IntersectionObserver" in window && heroEl2) new IntersectionObserver(function (es) { heroOn = es[0].isIntersecting; }).observe(heroEl2);
     function loop(now) {
+      if (!heroOn || document.hidden) { last = now; heroRAF = requestAnimationFrame(loop); return; }   // nothing to draw while the hero is off screen
       var t = ((now - start) / 1000) % LOOP, dt = Math.min(.05, (now - last) / 1000); last = now;
       var k = Math.floor(Math.max(0, now - start) / 1000 / LOOP);
       cbK = k; cbCh = k % 4; cbPrev = k > 0 ? (k - 1) % 4 : -1; groups = cbG[cbCh];
@@ -757,6 +777,7 @@
       updateHeader();
       if (R.r === "home") { startHero(); bindHomeGrid(); bindFacRot(); }
       if (R.r === "portfolio") bindPortfolio();
+      watchTiles(document.getElementById("view"));
       if (R.r === "work") bindGallery(R.slug);
       if (R.r === "facilities") bindFacilities();
       if (R.r === "contact") bindContact();
