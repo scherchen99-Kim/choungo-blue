@@ -374,18 +374,60 @@
       c.fillText(lab, mx + 10 + tw > W - 8 ? mx - 10 - tw : mx + 10, my - 10);
     }
   }
-  function fxWave(c, W, H, tt, mx, my) {   // Contact: soft voice-like lines that swell where the pointer is
-    var n = 7, top = H * .22, gapY = (H * .7) / n; c.lineWidth = 1.2;
-    for (var i = 0; i < n; i++) {
-      var y0 = top + i * gapY; c.strokeStyle = FX_C + (.1 + .03 * (i % 3)).toFixed(2) + ")"; c.beginPath();
-      for (var x = 0; x <= W; x += 8) {
-        var dx = x - mx, dy = y0 - my, near = Math.exp(-(dx * dx) / 26000 - (dy * dy) / 30000);
-        var amp = 5 + 34 * near + 6 * Math.sin(tt * .5 + i);
-        var y = y0 + amp * Math.sin(x * .011 + tt * (.9 + i * .07) + i * .8);
-        if (x) c.lineTo(x, y); else c.moveTo(x, y);
-      }
-      c.stroke();
+  function fxWave(c, W, H, tt, mx, my, f) {   // Contact: wave lines keep moving; tap to launch a paper plane through the gaps into the mailbox
+    var dt = f.last ? Math.min(.05, tt - f.last) : 0; f.last = tt;
+    var n = 6, top = H * .2, gapY = (H * .72) / n;
+    function lineY(i, x) { var amp = 7 + 5 * Math.sin(tt * .45 + i * 1.3) + 26 * Math.pow(Math.max(0, Math.sin(tt * .55 + i * 2.1)), 10); return top + i * gapY + amp * Math.sin(x * .009 + tt * (1.1 + i * .09) + i * .8); }   // calm, with a big swell now and then
+    if (!f.mail) { f.mail = { got: 0 }; f.planes = []; f.clk = fxPtr.clk || 0; f.fx = []; }
+    var M = f.mail, bw = 50, bh = Math.min(W < 760 ? 84 : 76, gapY * .8), bx = W - bw - 18;
+    // the mailbox rests in the gap between two lines, then slides to another gap
+    var kf = 2 * (1 + Math.sin(tt * .22)), kb = Math.floor(kf), fr = kf - kb, sm = Math.min(1, Math.max(0, (fr - .35) / .3)); sm = sm * sm * (3 - 2 * sm);
+    var by = top + (Math.min(n - 2, kb + sm) + .5) * gapY - bh / 2;
+    // launch: a click or tap anywhere left of the mailbox sends a plane flying right from that spot
+    if (fxPtr.clk && fxPtr.clk !== f.clk) {
+      f.clk = fxPtr.clk; var cx = fxPtr.cx - f.rl, cy = fxPtr.cy - f.rt;
+      if (cx > 0 && cx < bx - 30 && cy > 70 && cy < H && !f.won && f.planes.length < 3) f.planes.push({ x: cx, y: cy, vy: 0, dead: 0, rot: 0 });
     }
+    // the wave lines
+    c.lineWidth = 1.2;
+    for (var i = 0; i < n; i++) {
+      var hitA = f.fx.filter(function (e) { return e.i === i; }).reduce(function (m2, e) { return Math.max(m2, 1 - (tt - e.t0) / .5); }, 0);
+      c.strokeStyle = hitA > 0 ? "rgba(228,0,127," + (.15 + .5 * hitA).toFixed(3) + ")" : FX_C + (.12 + .03 * (i % 3)).toFixed(2) + ")";
+      c.beginPath(); for (var x = 0; x <= W; x += 8) { var y = lineY(i, x); if (x) c.lineTo(x, y); else c.moveTo(x, y); } c.stroke();
+    }
+    f.fx = f.fx.filter(function (e) { return tt - e.t0 < .5; });
+    // planes: fly straight; touching a line knocks them down; reaching the mailbox delivers
+    f.planes = f.planes.filter(function (P) {
+      if (P.dead) { P.vy += 600 * dt; P.y += P.vy * dt; P.x += 60 * dt; P.rot += 6 * dt; return P.y < H + 30 && tt - P.dead < 1.5; }
+      P.x += (W < 760 ? 280 : 470) * dt;
+      for (var k = 0; k < n; k++) if (Math.abs(lineY(k, P.x) - P.y) < 4) { P.dead = tt; P.vy = -60; f.fx.push({ i: k, t0: tt }); return true; }
+      if (P.x > bx) {
+        if (P.y > by && P.y < by + bh) {
+          M.got++; M.flash = tt;
+          if (M.got >= 5 && !f.won) {   // five letters in: "Let's talk." becomes "We got it!", back after 6 seconds
+            f.won = tt; var sw = f.sec && f.sec.querySelector(".fx-swap");
+            if (sw) { sw.classList.add("out"); setTimeout(function () { sw.textContent = "We got it!"; sw.classList.remove("out"); sw.classList.add("won"); }, 260);
+              setTimeout(function () { sw.classList.add("out"); setTimeout(function () { sw.textContent = "Let’s talk."; sw.classList.remove("won"); void sw.offsetWidth; sw.classList.remove("out"); M.got = 0; f.won = 0; }, 450); }, 6260); }
+          }
+          return false;
+        }
+        if (P.x > W + 20) return false;
+      }
+      return true;
+    });
+    f.planes.forEach(function (P) {
+      c.save(); c.translate(P.x, P.y); c.rotate(P.rot); c.globalAlpha = P.dead ? Math.max(0, 1 - (tt - P.dead) / 1.5) : 1;
+      c.fillStyle = "rgba(255,255,255,.9)"; c.beginPath(); c.moveTo(9, 0); c.lineTo(-8, -6); c.lineTo(-4, 0); c.lineTo(-8, 6); c.closePath(); c.fill();
+      c.strokeStyle = "rgba(9,95,224,.8)"; c.lineWidth = 1; c.beginPath(); c.moveTo(9, 0); c.lineTo(-4, 0); c.stroke();
+      c.restore();
+    });
+    // mailbox
+    var fl = M.flash ? Math.max(0, 1 - (tt - M.flash) / .6) : 0;
+    c.strokeStyle = FX_C + (.4 + .5 * fl).toFixed(2) + ")"; c.lineWidth = 1.4; c.strokeRect(bx + .5, by + .5, bw, bh);
+    c.fillStyle = "rgba(0,127,255," + (.12 + .4 * fl).toFixed(3) + ")"; c.fillRect(bx + 1, by + 1, bw - 1, bh - 1);
+    c.strokeStyle = FX_C + ".55)"; c.beginPath(); c.moveTo(bx + 6, by + 8); c.lineTo(bx + bw / 2, by + 22); c.lineTo(bx + bw - 6, by + 8); c.stroke();   // envelope flap
+    c.font = "500 10px ui-monospace, Menlo, monospace"; c.fillStyle = FX_C + ".6)"; c.textAlign = "center";
+    c.fillText("MAIL " + Math.min(5, M.got) + "/5", bx + bw / 2, by + bh + 16); c.textAlign = "start";
   }
   function fxTick(t) {
     fxHeads = fxHeads.filter(function (s) { return document.body.contains(s); });
@@ -399,7 +441,7 @@
       f.rl = r.left; f.rt = r.top; f.sec = sec;
       if (kind === "grid") fxGrid(c, W, H, tt, mx, my, f);
       else if (kind === "path") fxPath(c, W, H, tt, mx, my, f);
-      else if (kind === "wave") fxWave(c, W, H, tt, mx, my);
+      else if (kind === "wave") fxWave(c, W, H, tt, mx, my, f);
       else fxDots(c, W, H, tt, mx, my, f);
     });
     fxT = fxHeads.length ? requestAnimationFrame(fxTick) : 0;
@@ -1133,7 +1175,7 @@
     return '' +
     '<section class="page-head inner" data-fx="wave">' +
       '<span class="label" style="color:var(--grey)">Contact</span>' +
-      '<h1 class="display" style="margin-top:20px">Let’s talk.<br>Let’s make it.</h1>' +
+      '<h1 class="display" style="margin-top:20px"><span class="fx-swap">Let’s talk.</span><br>Let’s make it.</h1>' +
       '<div class="row"><span></span><p>아직 정리되지 않은 아이디어도 괜찮습니다. 일정과 예산, 수량을 알려주시면 디자인부터 제작, 설치까지 맞는 방법을 함께 제안드립니다.</p></div>' +
     '</section>' +
     '<section class="section inner"><div class="contact-grid">' +
