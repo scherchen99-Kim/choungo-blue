@@ -78,7 +78,6 @@ window.CHOUNGO_DATA = {
     {"slug": "w75", "title": "대우조선해양 애뉴얼 리포트", "client": "대우조선해양", "category": "print", "type": "EDITORIAL", "scope": ["편집 디자인", "인쇄"], "description": "제품과 브랜드 정보를 읽기 쉽게 정리한 인쇄물입니다.", "images": ["img/work/p75-1.jpg", "img/work/p75-0.jpg", "img/work/p75-2.jpg", "img/work/p75-3.jpg", "img/work/p75-4.jpg"]},
     {"slug": "w80", "cover": "img/feat/04_s_academy.jpg", "title": "삼성전자 S아카데미", "client": "삼성전자", "category": "print", "type": "PROMOTION", "scope": ["프로모션 기획", "그래픽", "제작물"], "description": "판매 행사와 시즌 캠페인을 위한 프로모션 디자인입니다.", "images": ["img/work/p80-0.jpg"]},
     {"slug": "w84", "title": "농협 내외부 사인", "client": "농협", "category": "signage", "type": "SIGN", "scope": ["사인 디자인", "제작", "시공"], "description": "매장 안팎의 사인물과 대형 출력물을 디자인하고 제작·시공했습니다.", "images": ["img/work/p84-1.jpg", "img/work/p84-0.jpg", "img/work/p84-2.jpg"]},
-    {"slug": "w85", "title": "대형 현수막", "client": "하이마트 외", "category": "signage", "type": "SIGN", "scope": ["사인 디자인", "제작", "시공"], "description": "매장 안팎의 사인물과 대형 출력물을 디자인하고 제작·시공했습니다.", "images": ["img/work/p85-0.jpg"]},
     {"slug": "w86", "title": "매장 사인 · 인테리어", "client": "가전 매장 외", "category": "signage", "type": "SIGN", "scope": ["사인 디자인", "제작", "시공"], "description": "매장 안팎의 사인물과 대형 출력물을 디자인하고 제작·시공했습니다.", "images": ["img/work/p88-1.jpg", "img/work/p86-0.jpg", "img/work/p86-1.jpg", "img/work/p87-0.jpg", "img/work/p87-1.jpg", "img/work/p87-2.jpg", "img/work/p87-3.jpg", "img/work/p88-0.jpg", "img/work/p89-0.jpg", "img/work/p89-1.jpg"]}
   ],
 
