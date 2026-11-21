@@ -526,7 +526,44 @@ body.scrolling .work-grid { pointer-events: none; }   /* no hover effects firing
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  /* the slow logo and picture rows keep moving (they are the point of those sections) */
+  .p-track { animation-duration: 40s !important; animation-iteration-count: infinite !important; }
+  .m-track { animation-duration: var(--dur) !important; animation-iteration-count: infinite !important; }
 }
+/* ---------- phones: portfolio as two endless rows moving in opposite directions ---------- */
+.m-marq, .m-row { display: none; }
+@media (max-width: 760px) {
+  #homeGrid { display: none !important; }
+  .m-marq { display: block; }
+  .m-row { display: block; overflow: hidden; }
+  .m-track { display: flex; width: max-content; animation: mrow var(--dur, 60s) linear infinite; will-change: transform; }
+  .m-row.rev .m-track { animation-direction: reverse; }
+  .m-row:has(.tile.show) .m-track { animation-play-state: paused; }
+  @keyframes mrow { to { transform: translate3d(-50%, 0, 0); } }
+  .m-track .tile { flex: 0 0 66vw; aspect-ratio: 16 / 10; margin: 0; content-visibility: visible; }
+  .m-track .tile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .m-track .tile.pan img { height: auto; bottom: auto; }
+  .m-track .tile .ov { inset: 0; background: rgba(0,0,0,.42); padding: 14px 16px; gap: 4px; opacity: 0; transition: opacity .3s ease; justify-content: flex-end; }
+  .m-track .tile.show .ov { opacity: 1; }
+  .m-track .tile .ov h3 { font-size: 17px; transform: none; }
+  .m-track .tile .ov .label { transform: none; }
+  .pgroups { padding-bottom: 0; }
+  .pgroup { padding-top: 26px; }
+  .pg-head { margin-bottom: 12px; }
+  /* facilities: title first, then the picture, then the text */
+  .split.dark { display: flex; flex-direction: column; }
+  .split.dark .body { display: contents; }
+  .split.dark .body > * { padding-left: max(var(--pad), var(--gutter)); padding-right: max(var(--pad), var(--gutter-r)); margin: 0; }
+  .split.dark .body > .label { order: 1; display: block; padding-top: 52px; }
+  .split.dark .body > h2 { order: 2; margin-top: 10px; }
+  .split.dark .media { order: 3; width: 100%; margin-top: 26px; }
+  .split.dark .body > p { order: 4; margin-top: 22px; max-width: none !important; }
+  .split.dark .body > ul { order: 5; margin: 22px max(var(--pad), var(--gutter-r)) 0 max(var(--pad), var(--gutter)); padding: 0; }
+  .split.dark .body > p:last-child { order: 6; padding-bottom: 52px; }
+  /* partners: smaller logos, always moving */
+  .p-track { zoom: .5 !important; }
+}
+@media (hover: none) { .partners:hover .p-track { animation-play-state: running; } }
 </style>
 
 <header class="site-header" id="header">
@@ -575,6 +612,6 @@ body.scrolling .work-grid { pointer-events: none; }   /* no hover effects firing
   <div class="lb-bot inner"><span class="label count" id="lbCount"></span><span class="label" style="color:var(--grey)">Sample visual</span></div>
 </div>
 
-<script src="data.js?v=20261121194352"></script>
-<script src="app.js?v=20261121194352"></script>
+<script src="data.js?v=20261121204920"></script>
+<script src="app.js?v=20261121204920"></script>
 </html>

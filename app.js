@@ -61,6 +61,12 @@
       '<img src="' + (p.cover ? p.cover.replace("img/feat/", "img/thumb/feat-") : p.images[0].replace("img/work/", "img/thumb/")) + '" alt="' + esc(p.title) + '" loading="lazy" decoding="async"' + (p.category === "web" ? ' style="animation-delay:' + (webIdx(p) * 4.5) + 's"' : '') + '>' +
       '<span class="ov"><span class="label">' + esc(catLabel[p.category]) + '</span><h3>' + esc(p.title) + '</h3></span></a>';
   }
+  // phones: an endless, slowly moving row of pictures (no captions, no gaps); dir 1 runs the other way
+  function mrow(list, dir) {
+    if (!list.length) return "";
+    var set = list.slice(); while (set.length < 4) set = set.concat(list);
+    return '<div class="m-row' + (dir ? ' rev' : '') + '"><div class="m-track" style="--dur:' + (set.length * 7) + 's">' + set.concat(set).map(tile).join("") + '</div></div>';
+  }
   function slot(src, name, size, alt) {
     if (src) return '<img src="' + src + '" alt="' + esc(alt) + '">';
     return '<span class="slot"><b>이미지 자리</b><span>' + esc(name) + '</span><span>' + esc(size) + '</span></span>';
@@ -136,6 +142,7 @@
       '<div class="work-grid cols-3" id="homeGrid">' + homeOrder.slice(0, homeShown).map(tile).join("") +
         '<a class="tile tile-all" href="#portfolio"><span>View all<br>projects</span><i>' + D.projects.length + ' works →</i></a>' +
       '</div>' +
+      '<div class="m-marq">' + mrow(homeOrder.filter(function (p, i) { return i % 2 === 0; }), 0) + mrow(homeOrder.filter(function (p, i) { return i % 2 === 1; }), 1) + '</div>' +
     '</section>' +
 
     '<section class="section dark">' +
@@ -395,7 +402,7 @@
         var sx0 = oX1 + 30, sy0 = oY1 + 30;
         function outlinePts(g) {
           var key = W + "@" + size; if (g._pk === key) return g._pts;
-          var pts = [], oy = Math.ceil(size * 1.0), h = Math.ceil(size * 1.25), w = Math.ceil(W), c = document.createElement("canvas");
+          var pts = [], inkPts = [], oy = Math.ceil(size * 1.0), h = Math.ceil(size * 1.25), w = Math.ceil(W), c = document.createElement("canvas");
           c.width = w; c.height = h; var x = c.getContext("2d"); setFont(size); offFont(x);
           g.lines.forEach(function (l) {
             x.clearRect(0, 0, w, h); x.fillStyle = "#000"; x.fillText(l.text, pad, oy);
@@ -414,9 +421,12 @@
               function runY(col) { var a = -1, b = -1; for (var q = top; q <= bot; q++) if (ink(col, q)) { if (a < 0) a = q; b = q; } return (a + b) / 2; }
               var dy = l.y - oy;
               pts.push([runX(top), top + dy], [runX(bot), bot + 1 + dy], [lef, runY(lef) + dy], [rig + 1, runY(rig) + dy]);
+              var mr = Math.round(top + (bot - top) * .55), bs = -1, bl = 0, rs = -1;   // a point inside the letter's ink (for the paint bucket)
+              for (var q = c0; q <= c1; q++) { if (q < c1 && ink(q, mr)) { if (rs < 0) rs = q; } else if (rs >= 0) { if (q - rs > bl) { bl = q - rs; bs = rs; } rs = -1; } }
+              if (bs >= 0) inkPts.push([bs + bl / 2, mr + dy]);
             }
           });
-          g._pk = key; g._pts = pts; return pts;
+          g._pk = key; g._pts = pts; g._ink = inkPts; return pts;
         }
         function anchorsFor(g, x0, x1) {
           ctx.fillStyle = "#fff"; ctx.strokeStyle = PATH; ctx.lineWidth = 1.5;
@@ -431,7 +441,7 @@
         }
         // paint bucket cursor (hotspot = tip of the drip)
         function bucket(x, y) {
-          ctx.save(); ctx.translate(x, y); ctx.lineWidth = 1.4; ctx.strokeStyle = "#000055"; ctx.fillStyle = "#fff";
+          ctx.save(); ctx.translate(x, y); ctx.scale(1.3, 1.3); ctx.lineWidth = 1.4; ctx.strokeStyle = "#000055"; ctx.fillStyle = "#fff";
           ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(-3, -5, 0, -9); ctx.quadraticCurveTo(3, -5, 0, 0); ctx.fill(); ctx.stroke();   // drip
           ctx.translate(13, -17); ctx.rotate(-.75);
           ctx.beginPath(); ctx.moveTo(-9, -7); ctx.lineTo(9, -7); ctx.lineTo(7, 9); ctx.lineTo(-7, 9); ctx.closePath(); ctx.fill(); ctx.stroke();   // body
@@ -456,7 +466,8 @@
           var gp = ease(prog(t, [T_DEL, T_GROW]));
           var bx0 = oX0 - 12 + (nX0 - oX0) * gp, by0 = oY0 - 12 + (nY0 - oY0) * gp, bx1 = oX1 + 12 + (nX1 - oX1) * gp, by1 = oY1 + 12 + (nY1 - oY1) * gp;
           var fill = ease(prog(t, [T_CLICK, T_FILL])), pathA = 1 - ease(prog(t, [T_FILL, T_END]));
-          var kx = pad + cur[0].width * .32, ky = (cur[0].top + cur[0].bottom) / 2;   // where the bucket clicks
+          var kx = pad + cur[0].width * .32, ky = (cur[0].top + cur[0].bottom) / 2;   // where the bucket clicks: on a letter, not in the gap between letters
+          outlinePts(cur[0]); (cur[0]._ink || []).reduce(function (best, p) { var d = Math.abs(p[0] - (pad + cur[0].width * .32)); if (d < best) { kx = p[0]; ky = p[1]; return d; } return best; }, 1e9);
           var kR = fill * Math.hypot(Math.max(kx - nX0, nX1 - kx), Math.max(ky - nY0, nY1 - ky));
           ctx.save();
           if (fill > 0) { ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.arc(kx, ky, kR, 0, Math.PI * 2); ctx.clip("evenodd"); }
@@ -633,12 +644,12 @@
       '<span class="note-sample">' + D.projects.length + ' projects</span></div>' +
     '<div class="work-grid cols-3" id="pgrid">' + D.projects.map(tile).join("") + '</div>' +
     // phones: one swipeable row per category, so each category takes about one screen
-    '<div class="pgroups">' + D.categories.map(function (c) {
+    '<div class="pgroups">' + (function () { var gi = 0; return D.categories.map(function (c) {
       var list = D.projects.filter(function (p) { return p.category === c.id; });
       if (!list.length) return "";
-      return '<section class="pgroup"><div class="pg-head inner"><h3>' + esc(c.label) + '</h3><span>' + list.length + ' · swipe →</span></div>' +
-        '<div class="pg-row">' + list.map(tile).join("") + '</div></section>';
-    }).join("") + '</div>' +
+      return '<section class="pgroup"><div class="pg-head inner"><h3>' + esc(c.label) + '</h3><span>' + list.length + ' works</span></div>' +
+        mrow(list, gi++ % 2) + '</section>';
+    }).join(""); })() + '</div>' +
     cta();
   }
   function bindPortfolio() {
@@ -810,10 +821,16 @@
     var slug = t.getAttribute("href").slice(6), p = D.projects.filter(function (q) { return q.slug === slug; })[0];
     if (!p) return;
     e.preventDefault();
+    // touch screens, moving rows: the first tap shows the title on the picture, the second opens it
+    if (t.closest(".m-row") && !t.classList.contains("show")) {
+      document.querySelectorAll(".m-row .tile.show").forEach(function (x) { x.classList.remove("show"); });
+      t.classList.add("show"); clearTimeout(t._sh); t._sh = setTimeout(function () { t.classList.remove("show"); }, 3500);
+      return;
+    }
     // arrows step through the projects shown in this grid (one picture each), not inside one project
     var grid = t.parentNode, tiles = Array.prototype.slice.call(grid.querySelectorAll('a.tile[href^="#work-"]')).filter(function (x) { return !x.hidden && x.offsetParent !== null; });
     if (!tiles.length) tiles = [t];
-    lbProjects = tiles.map(function (x) { var sl = x.getAttribute("href").slice(6); return D.projects.filter(function (q) { return q.slug === sl; })[0]; }).filter(Boolean);
+    lbProjects = tiles.map(function (x) { var sl = x.getAttribute("href").slice(6); return D.projects.filter(function (q) { return q.slug === sl; })[0]; }).filter(function (q, k, a) { return q && a.indexOf(q) === k; });
     var idx = lbProjects.indexOf(p); if (idx < 0) { lbProjects = [p]; idx = 0; }
     openLB(lbProjects.map(function (q) { return q.cover || q.images[0]; }), idx, p.title, lbProjects);
   });
