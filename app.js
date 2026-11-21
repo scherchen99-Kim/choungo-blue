@@ -166,8 +166,12 @@
     function breakAt(x, y) {
       var ci = Math.floor((x - 16) / bw), cj = Math.floor((y - top) / (bh + gap)), k = cj * cols + ci;
       if (ci < 0 || ci >= cols || cj < 0 || cj >= rows || !K.live[k]) return null;
-      K.live[k] = 0; K.hit[k] = tt;
-      if (Math.random() < .2) f.items.push({ x: 16 + ci * bw + bw / 2, y: top + cj * (bh + gap) + bh / 2, kind: Math.random() < .5 ? "x3" : "gun" });
+      K.live[k] = 0; K.hit[k] = tt; f.lastBreak = tt;
+      var left = K.live.filter(Boolean).length, endgame = left < K.live.length * .2;
+      if (!f.items.length && tt > (f.itemCD || 0) && Math.random() < (endgame ? .6 : .25)) {   // one item at a time, with a pause between drops
+        f.items.push({ x: 16 + ci * bw + bw / 2, y: top + cj * (bh + gap) + bh / 2, kind: endgame || Math.random() < .5 ? "gun" : "x3" });
+        f.itemCD = tt + 3;
+      }
       return { cx: 16 + ci * bw + bw / 2, cy: top + cj * (bh + gap) + bh / 2 };
     }
     // balls
@@ -180,6 +184,8 @@
         if (B.vy > 0 && B.y + r > py && B.y + r < py + 10 && Math.abs(B.x - f.pad) < pw / 2 + r) {
           var u = (B.x - f.pad) / (pw / 2), sp = Math.hypot(B.vx, B.vy); B.vx = sp * .8 * u; B.vy = -Math.sqrt(Math.max(1, sp * sp - B.vx * B.vx));
         }
+        var sp2 = Math.hypot(B.vx, B.vy), minV = sp2 * .42;   // never let a ball skim sideways forever
+        if (Math.abs(B.vy) < minV) { B.vy = (B.vy < 0 ? -1 : 1) * minV; B.vx = (B.vx < 0 ? -1 : 1) * Math.sqrt(sp2 * sp2 - minV * minV); }
         var h = breakAt(B.x, B.y);
         if (h) { if (Math.abs(B.x - h.cx) / bw > Math.abs(B.y - h.cy) / bh) B.vx = -B.vx; else B.vy = -B.vy; }
       }
@@ -201,8 +207,25 @@
     });
     if (f.gun > tt && tt > f.fire) { f.fire = tt + .32; [-.28, 0, .28].forEach(function (an) { f.shots.push({ x: f.pad, y: py - 4, vx: Math.sin(an) * 620, vy: -Math.cos(an) * 620 }); }); }
     f.shots = f.shots.filter(function (sh) { sh.x += sh.vx * dt; sh.y += sh.vy * dt; if (breakAt(sh.x, sh.y)) return false; return sh.y > top - 40 && sh.x > 0 && sh.x < W; });
-    // cleared: short pause, then the wall comes back
-    if (K.live.every(function (v) { return !v; })) { if (!K.done) K.done = tt; if (tt - K.done > 1.2) { K.live = K.live.map(function () { return 1; }); K.done = 0; f.items = []; } }
+    // stuck for a while: a gun drops from the top to help
+    if (!f.lastBreak) f.lastBreak = tt;
+    if (tt - f.lastBreak > 9 && !f.items.length) { f.items.push({ x: 40 + Math.random() * (W - 80), y: top, kind: "gun" }); f.lastBreak = tt; }
+    // cleared: fireworks and "Our portfolio." becomes "Our win."; the wall comes back a while later
+    f.parts = f.parts || [];
+    if (K.live.every(function (v) { return !v; })) {
+      if (!K.done) {
+        K.done = tt; f.items = []; f.shots = []; f.gun = 0;
+        var pal = ["#ffffff", "#c3e3fb", "#095fe0", "#00a6e2", "#e4007f", "#ffe100"];
+        for (var fw = 0; fw < 4; fw++) { var fx0 = W * (.2 + .2 * fw), fy0 = top + 40 + Math.random() * 60;
+          for (var pk = 0; pk < 60; pk++) { var an = Math.random() * 6.2832, v = 80 + Math.random() * 300; f.parts.push({ x: fx0, y: fy0, vx: Math.cos(an) * v, vy: Math.sin(an) * v, life: 1 + Math.random() * .8, age: -fw * .25, col: pal[pk % pal.length] }); } }
+        var sw = f.sec && f.sec.querySelector(".fx-swap");
+        if (sw && !sw.classList.contains("won")) { sw.classList.add("out"); setTimeout(function () { sw.textContent = "win."; sw.classList.remove("out"); sw.classList.add("won"); }, 260); }
+      }
+      if (tt - K.done > 6) { K.live = K.live.map(function () { return 1; }); K.done = 0; f.lastBreak = tt; }
+    }
+    f.parts = f.parts.filter(function (p) { p.age += dt; if (p.age < 0) return true; p.vx *= Math.pow(.25, dt); p.vy = p.vy * Math.pow(.25, dt) + 140 * dt; p.x += p.vx * dt; p.y += p.vy * dt; return p.age < p.life; });
+    f.parts.forEach(function (p) { if (p.age < 0) return; c.globalAlpha = Math.max(0, 1 - p.age / p.life); c.fillStyle = p.col; c.fillRect(p.x - 1.5, p.y - 1.5, 3, 3); });
+    c.globalAlpha = 1;
     for (var j = 0; j < rows; j++) for (var i = 0; i < cols; i++) {
       var k = j * cols + i, x = 16 + i * bw + gap / 2, y = top + j * (bh + gap), al = K.live[k] ? 1 : Math.max(0, 1 - (tt - K.hit[k]) / .5);
       if (al <= 0) continue;
@@ -922,7 +945,7 @@
     return '' +
     '<section class="page-head inner" data-fx="grid">' +
       '<span class="label" style="color:var(--grey)">Selected work</span>' +
-      '<h1 class="display" style="margin-top:20px">Our<br>portfolio.</h1>' +
+      '<h1 class="display" style="margin-top:20px">Our<br><span class="fx-swap">portfolio.</span></h1>' +
       '<div class="row"><span></span><p>브랜드 홈페이지부터 매장 POP, 인쇄물, 디스플레이, 사인까지. 기획하고 디자인한 것을 직접 만들어 현장에 세운 작업들입니다.</p></div>' +
     '</section>' +
     '<div class="portfolio-bar inner"><div class="filters" id="filters" role="group" aria-label="카테고리 필터">' + btns + '</div>' +
