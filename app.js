@@ -141,12 +141,15 @@
     return a;
   }
 
-  function footer() {
-    var c = D.company;
+  // partner logos: shown on the About page only
+  function partnersSec() {
     return '<section class="partners"><div class="inner"><span class="label">Main Partners</span><h2>Brands we work with</h2></div>' +
       '<div class="p-track"><span class="p-item"><img src="img/partners/samsung.png" alt="Samsung" style="height:31px"></span><span class="p-item"><img src="img/partners/sktelecom.png" alt="SK telecom" style="height:51px"></span><span class="p-item"><img src="img/partners/lottehimart.png" alt="롯데하이마트" style="height:33px"></span><span class="p-item"><img src="img/partners/lottealuminium.png" alt="롯데알미늄" style="height:38px"></span><span class="p-item"><img src="img/partners/dimchae.png" alt="딤채" style="height:47px"></span><span class="p-item"><img src="img/partners/philips.png" alt="Philips" style="height:35px"></span><span class="p-item"><img src="img/partners/canon.png" alt="Canon" style="height:40px"></span><span class="p-item"><img src="img/partners/lg.png" alt="LG전자" style="height:44px"></span><span class="p-item"><img src="img/partners/lguplus.png" alt="LG U+" style="height:43px"></span><span class="p-item"><img src="img/partners/hp.png" alt="HP" style="height:46px"></span><span class="p-item"><img src="img/partners/olympus.png" alt="Olympus" style="height:37px"></span><span class="p-item"><img src="img/partners/nespresso.png" alt="Nespresso" style="height:35px"></span><span class="p-item"><img src="img/partners/innisfree.png" alt="innisfree" style="height:60px"></span><span class="p-item"><img src="img/partners/thefaceshop.png" alt="The Face Shop" style="height:26px"></span><span class="p-item"><img src="img/partners/nhinvest.png" alt="NH투자증권" style="height:33px"></span><span class="p-item"><img src="img/partners/ibk.png" alt="IBK기업은행" style="height:47px"></span><span class="p-item"><img src="img/partners/hellomobile.png" alt="hello mobile" style="height:54px"></span><span class="p-item"><img src="img/partners/samsung.png" alt="Samsung" style="height:31px"></span><span class="p-item"><img src="img/partners/sktelecom.png" alt="SK telecom" style="height:51px"></span><span class="p-item"><img src="img/partners/lottehimart.png" alt="롯데하이마트" style="height:33px"></span><span class="p-item"><img src="img/partners/lottealuminium.png" alt="롯데알미늄" style="height:38px"></span><span class="p-item"><img src="img/partners/dimchae.png" alt="딤채" style="height:47px"></span><span class="p-item"><img src="img/partners/philips.png" alt="Philips" style="height:35px"></span><span class="p-item"><img src="img/partners/canon.png" alt="Canon" style="height:40px"></span><span class="p-item"><img src="img/partners/lg.png" alt="LG전자" style="height:44px"></span><span class="p-item"><img src="img/partners/lguplus.png" alt="LG U+" style="height:43px"></span><span class="p-item"><img src="img/partners/hp.png" alt="HP" style="height:46px"></span><span class="p-item"><img src="img/partners/olympus.png" alt="Olympus" style="height:37px"></span><span class="p-item"><img src="img/partners/nespresso.png" alt="Nespresso" style="height:35px"></span><span class="p-item"><img src="img/partners/innisfree.png" alt="innisfree" style="height:60px"></span><span class="p-item"><img src="img/partners/thefaceshop.png" alt="The Face Shop" style="height:26px"></span><span class="p-item"><img src="img/partners/nhinvest.png" alt="NH투자증권" style="height:33px"></span><span class="p-item"><img src="img/partners/ibk.png" alt="IBK기업은행" style="height:47px"></span><span class="p-item"><img src="img/partners/hellomobile.png" alt="hello mobile" style="height:54px"></span></div>' +
-      '</section>' +
-      '<div class="inner">' +
+      '</section>';
+  }
+  function footer() {
+    var c = D.company;
+    return       '<div class="inner">' +
       '<div class="foot-contact">' +
         '<div><span class="label">Telephone</span><span class="v">' + esc(c.phone) + '</span></div>' +
         '<div><span class="label">Fax</span><span class="v">' + esc(c.fax) + '</span></div>' +
@@ -697,8 +700,8 @@
         return '<li><span class="no">' + pad(i + 1) + '</span><h3>' + esc(s[0]) + '</h3><p>' + esc(s[1]) + '</p></li>';
       }).join("") + '</ol>' +
     '</section>' +
-    '<div class="work-grid">' + D.projects.slice(0, 4).map(tile).join("") + '</div>' +
-    cta();
+    cta() +
+    partnersSec();
   }
 
   /* ---------------- PORTFOLIO ---------------- */
