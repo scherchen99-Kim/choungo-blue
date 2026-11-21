@@ -121,7 +121,9 @@
   // page heads (About, Portfolio, Facilities, Contact): a quiet halftone dot field in the empty navy space.
   // slow diagonal bands of slightly bigger dots drift through (like a print screen), and dots swell a little around the pointer
   var fxHeads = [], fxT = 0, fxPtr = { x: -9999, y: -9999 };
-  window.addEventListener("pointermove", function (e) { fxPtr.x = e.clientX; fxPtr.y = e.clientY; }, { passive: true });
+  function fxSet(e) { fxPtr.x = e.clientX; fxPtr.y = e.clientY; }
+  window.addEventListener("pointermove", fxSet, { passive: true }); window.addEventListener("pointerdown", fxSet, { passive: true });
+  window.addEventListener("touchmove", function (e) { var t = e.touches[0]; if (t) { fxPtr.x = t.clientX; fxPtr.y = t.clientY; } }, { passive: true });
   window.addEventListener("pointerleave", function () { fxPtr.x = fxPtr.y = -9999; });
   window.addEventListener("pointerup", function (e) { if (e.pointerType !== "mouse") fxPtr.x = fxPtr.y = -9999; }, { passive: true });   // a finger lifts: no swell left behind
   function headFx() {
@@ -155,7 +157,7 @@
     var B = f.ball, K = f.bk, pw = W < 760 ? 80 : 130, py = H - 34, r = 4;
     var hasPtr = mx > 0 && mx < W && my > 0 && my < H;
     var target = hasPtr ? mx : B.x + B.vx * .12;
-    f.pad += (target - f.pad) * Math.min(1, dt * (hasPtr ? 14 : 4.5));
+    if (hasPtr) f.pad = target; else f.pad += (target - f.pad) * Math.min(1, dt * 4.5);   // the pointer moves the paddle instantly
     f.pad = Math.max(pw / 2 + 8, Math.min(W - pw / 2 - 8, f.pad));
     // move the ball in small steps so it never skips a brick
     var steps = Math.max(1, Math.ceil(Math.hypot(B.vx, B.vy) * dt / 6));
