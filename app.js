@@ -359,7 +359,7 @@
         var PLATE = "#007fff", PATH = "#000055";
         var lw = Math.max(1.5, size / 80);
         var oX0 = pad, oY0 = prv ? prv[0].top : cur[0].top, oX1 = pad + (prv ? Math.max(prv[0].width, prv[1].width) : 40), oY1 = prv ? prv[1].bottom : cur[1].bottom;
-        var nX0 = pad - size * .12, nY0 = cur[0].top - size * .14, nX1 = pad + Math.max(cur[0].width, cur[1].width) + size * .12, nY1 = cur[1].bottom + size * .12;
+        var nX0 = pad - size * .06, nY0 = cur[0].top - size * .05, nX1 = pad + Math.max(cur[0].width, cur[1].width) + size * .06, nY1 = cur[1].bottom + size * .06;   // tighter plate, stays clear of the line above
         var sx0 = oX1 + 30, sy0 = oY1 + 30;
         function anchorsFor(g, x0, x1) {
           ctx.fillStyle = "#fff"; ctx.strokeStyle = PATH; ctx.lineWidth = 1.5;
