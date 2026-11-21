@@ -374,60 +374,116 @@
       c.fillText(lab, mx + 10 + tw > W - 8 ? mx - 10 - tw : mx + 10, my - 10);
     }
   }
-  function fxWave(c, W, H, tt, mx, my, f) {   // Contact: wave lines keep moving; tap to launch a paper plane through the gaps into the mailbox
-    var dt = f.last ? Math.min(.05, tt - f.last) : 0; f.last = tt;
-    var n = 6, top = H * .2, gapY = (H * .72) / n;
-    function lineY(i, x) { var amp = 7 + 5 * Math.sin(tt * .45 + i * 1.3) + 26 * Math.pow(Math.max(0, Math.sin(tt * .55 + i * 2.1)), 10); return top + i * gapY + amp * Math.sin(x * .009 + tt * (1.1 + i * .09) + i * .8); }   // calm, with a big swell now and then
-    if (!f.mail) { f.mail = { got: 0 }; f.planes = []; f.clk = fxPtr.clk || 0; f.fx = []; }
-    var M = f.mail, bw = 50, bh = Math.min(W < 760 ? 84 : 76, gapY * .8), bx = W - bw - 18;
-    // the mailbox rests in the gap between two lines, then slides to another gap
-    var kf = 2 * (1 + Math.sin(tt * .22)), kb = Math.floor(kf), fr = kf - kb, sm = Math.min(1, Math.max(0, (fr - .35) / .3)); sm = sm * sm * (3 - 2 * sm);
-    var by = top + (Math.min(n - 2, kb + sm) + .5) * gapY - bh / 2;
-    // launch: a click or tap anywhere left of the mailbox sends a plane flying right from that spot
-    if (fxPtr.clk && fxPtr.clk !== f.clk) {
-      f.clk = fxPtr.clk; var cx = fxPtr.cx - f.rl, cy = fxPtr.cy - f.rt;
-      if (cx > 0 && cx < bx - 30 && cy > 70 && cy < H && !f.won && f.planes.length < 3) f.planes.push({ x: cx, y: cy, vy: 0, dead: 0, rot: 0 });
-    }
-    // the wave lines
-    c.lineWidth = 1.2;
-    for (var i = 0; i < n; i++) {
-      var hitA = f.fx.filter(function (e) { return e.i === i; }).reduce(function (m2, e) { return Math.max(m2, 1 - (tt - e.t0) / .5); }, 0);
-      c.strokeStyle = hitA > 0 ? "rgba(228,0,127," + (.15 + .5 * hitA).toFixed(3) + ")" : FX_C + (.12 + .03 * (i % 3)).toFixed(2) + ")";
-      c.beginPath(); for (var x = 0; x <= W; x += 8) { var y = lineY(i, x); if (x) c.lineTo(x, y); else c.moveTo(x, y); } c.stroke();
-    }
-    f.fx = f.fx.filter(function (e) { return tt - e.t0 < .5; });
-    // planes: fly straight; touching a line knocks them down; reaching the mailbox delivers
-    f.planes = f.planes.filter(function (P) {
-      if (P.dead) { P.vy += 600 * dt; P.y += P.vy * dt; P.x += 60 * dt; P.rot += 6 * dt; return P.y < H + 30 && tt - P.dead < 1.5; }
-      P.x += (W < 760 ? 280 : 470) * dt;
-      for (var k = 0; k < n; k++) if (Math.abs(lineY(k, P.x) - P.y) < 4) { P.dead = tt; P.vy = -60; f.fx.push({ i: k, t0: tt }); return true; }
-      if (P.x > bx) {
-        if (P.y > by && P.y < by + bh) {
-          M.got++; M.flash = tt;
-          if (M.got >= 5 && !f.won) {   // five letters in: "Let's talk." becomes "We got it!", back after 6 seconds
-            f.won = tt; var sw = f.sec && f.sec.querySelector(".fx-swap");
-            if (sw) { sw.classList.add("out"); setTimeout(function () { sw.textContent = "We got it!"; sw.classList.remove("out"); sw.classList.add("won"); }, 260);
-              setTimeout(function () { sw.classList.add("out"); setTimeout(function () { sw.textContent = "Let’s talk."; sw.classList.remove("won"); void sw.offsetWidth; sw.classList.remove("out"); M.got = 0; f.won = 0; }, 450); }, 6260); }
-          }
-          return false;
-        }
-        if (P.x > W + 20) return false;
+  function fxWave(c, W, H, tt, mx, my, f) {   // Contact: maze chase; eat every white drop, then the EXIT opens; the dot follows the pointer along the corridors, ghosts hunt it
+    var dt = f.lastT ? Math.min(.05, tt - f.lastT) : 0; f.lastT = tt;
+    var cell = W < 760 ? 48 : 66, cols = Math.max(5, Math.floor((W - 32) / cell)), rows = Math.max(4, Math.floor((H - 134 - 44) / cell));   // big, simple cells
+    var ox = Math.round((W - cols * cell) / 2), oy = 134, r = W < 760 ? 6 : 5, N = cols * rows;
+    function build() {   // depth-first maze plus a few extra openings (loops), entrance top, exit bottom
+      var g = [], st = [], seen = {};
+      for (var q = 0; q < N; q++) g.push([1, 1, 1, 1]);
+      var cur = Math.floor(cols / 2); seen[cur] = 1; st.push(cur);
+      while (st.length) {
+        var k = st[st.length - 1], ci = k % cols, cj = Math.floor(k / cols), nb = [];
+        if (cj > 0 && !seen[k - cols]) nb.push([k - cols, 0, 2]); if (ci < cols - 1 && !seen[k + 1]) nb.push([k + 1, 1, 3]);
+        if (cj < rows - 1 && !seen[k + cols]) nb.push([k + cols, 2, 0]); if (ci > 0 && !seen[k - 1]) nb.push([k - 1, 3, 1]);
+        if (!nb.length) { st.pop(); continue; }
+        var pick = nb[Math.floor(Math.random() * nb.length)]; g[k][pick[1]] = 0; g[pick[0]][pick[2]] = 0; seen[pick[0]] = 1; st.push(pick[0]);
       }
-      return true;
+      for (var lp = 0; lp < N * .1; lp++) { var kk = Math.floor(Math.random() * N), c2 = kk % cols, r2 = Math.floor(kk / cols);
+        if (c2 < cols - 1 && Math.random() < .5) { g[kk][1] = 0; g[kk + 1][3] = 0; } else if (r2 < rows - 1) { g[kk][2] = 0; g[kk + cols][0] = 0; } }
+      var sc = Math.floor(cols / 2), ec = Math.floor(Math.random() * cols);
+      g[sc][0] = 0; g[(rows - 1) * cols + ec][2] = 0;
+      return { g: g, sc: sc, ec: ec, cols: cols, rows: rows, W: W };
+    }
+    var START = -1, EXIT = -2;
+    function cxy(k) { if (k === START) return [ox + (Z.sc + .5) * cell, oy - cell * .55]; if (k === EXIT) return [ox + (Z.ec + .5) * cell, oy + rows * cell + cell * .55]; return [ox + (k % cols + .5) * cell, oy + (Math.floor(k / cols) + .5) * cell]; }
+    function nbrs(k) {   // open neighbours, including the virtual START / EXIT spots
+      if (k === START) return [Z.sc]; if (k === EXIT) return [];
+      var g = Z.g[k], ci = k % cols, cj = Math.floor(k / cols), o = [];
+      if (!g[0]) o.push(cj > 0 ? k - cols : START); if (!g[1] && ci < cols - 1) o.push(k + 1);
+      if (!g[2] && (cj < rows - 1 || f.open)) o.push(cj < rows - 1 ? k + cols : EXIT); if (!g[3] && ci > 0) o.push(k - 1);   // the exit opens once every drop is eaten
+      return o;
+    }
+    if (!f.mz || f.mz.cols !== cols || f.mz.rows !== rows || f.mz.W !== W) {
+      f.mz = build(); var Z = f.mz; f.pl = { k: START, to: START, u: 1 }; f.won = 0; f.safe = 0; f.open = false;
+      var NP = W < 760 ? 8 : 12, used = {}; f.pel = [];
+      while (f.pel.length < NP) { var pk = Math.floor(Math.random() * N); if (used[pk] || pk < cols) continue; used[pk] = 1; f.pel.push({ k: pk, got: 0 }); }
+      f.ch = []; for (var cq = 0; cq < (W < 760 ? 1 : 2); cq++) { var ck = (rows - 1 - cq * 2) * cols + Math.floor(Math.random() * cols); f.ch.push({ k: ck, to: ck, u: 1 }); }
+    }
+    var Z = f.mz, P = f.pl;
+    if (!f.touchBound && f.sec) {   // touch: drag the dot (only when the finger starts near it, so the page still scrolls otherwise)
+      f.touchBound = true; var sec = f.sec;
+      sec.addEventListener("touchstart", function (e) { var t = e.touches[0], rr = sec.getBoundingClientRect(); if (t && f.px !== undefined && Math.hypot(t.clientX - rr.left - f.px, t.clientY - rr.top - f.py) < 60) f.drag = { x: t.clientX - rr.left, y: t.clientY - rr.top }; }, { passive: true });
+      sec.addEventListener("touchmove", function (e) { if (!f.drag) return; var t = e.touches[0], rr = sec.getBoundingClientRect(); f.drag.x = t.clientX - rr.left; f.drag.y = t.clientY - rr.top; e.preventDefault(); }, { passive: false });
+      sec.addEventListener("touchend", function () { f.drag = null; }, { passive: true });
+    }
+    var tg = f.drag ? [f.drag.x, f.drag.y] : (window.matchMedia("(hover: hover)").matches && mx > 0 && mx < W && my > 0 && my < H ? [mx, my] : null);
+    // the dot walks cell to cell along open corridors, always picking the opening that points most towards the pointer
+    if (!f.won) {
+      P.u += dt * (W < 760 ? 4 : 4.5);
+      if (P.u >= 1) {
+        P.k = P.to; P.u = 1;
+        if (P.k === EXIT) { f.won = tt; }
+        else if (tg) {
+          var here = cxy(P.k), vx = tg[0] - here[0], vy = tg[1] - here[1], vl = Math.hypot(vx, vy);
+          if (vl > cell * .35) {
+            var best = null, bs = .3;
+            nbrs(P.k).forEach(function (nk) { var to = cxy(nk), dx = to[0] - here[0], dy = to[1] - here[1], sc2 = (dx * vx + dy * vy) / (Math.hypot(dx, dy) * vl); if (sc2 > bs) { bs = sc2; best = nk; } });
+            if (best !== null) { P.to = best; P.u = 0; }
+          }
+        }
+      }
+    }
+    var a0 = cxy(P.k), b0 = cxy(P.to), px = a0[0] + (b0[0] - a0[0]) * Math.min(1, P.u), py = a0[1] + (b0[1] - a0[1]) * Math.min(1, P.u); f.px = px; f.py = py;
+    f.pel.forEach(function (pe) { if (!pe.got) { var q5 = cxy(pe.k); if (Math.hypot(px - q5[0], py - q5[1]) < cell * .3) pe.got = tt; } });   // eat the white drops
+    var gotN = f.pel.filter(function (pe) { return pe.got; }).length; if (gotN === f.pel.length && !f.open) { f.open = tt; }
+    // ghosts: roam cell to cell, mostly turning towards the dot at junctions
+    f.ch.forEach(function (C) {
+      if (f.won) return;
+      C.u += dt * (W < 760 ? 1.3 : 1.6);   // slow, easy-going ghosts
+      if (C.u >= 1) {
+        C.k = C.to; C.u = 0;
+        var opts = nbrs(C.k).filter(function (o) { return o >= 0; });
+        if (opts.length > 1 && C.prev !== undefined) opts = opts.filter(function (o) { return o !== C.prev; });
+        var pick2 = opts[Math.floor(Math.random() * opts.length)];
+        if (P.k >= 0 && Math.random() < .25) { var bd = 1e9; opts.forEach(function (o) { var a2 = cxy(o), d2 = Math.hypot(a2[0] - px, a2[1] - py); if (d2 < bd) { bd = d2; pick2 = o; } }); }
+        C.prev = C.k; C.to = pick2 === undefined ? C.k : pick2;
+      }
+      var a3 = cxy(C.k), b3 = cxy(C.to); C.x = a3[0] + (b3[0] - a3[0]) * C.u; C.y = a3[1] + (b3[1] - a3[1]) * C.u;
+      if (tt > f.safe && P.k >= 0 && Math.hypot(C.x - px, C.y - py) < cell * .5) { f.hit = tt; f.safe = tt + 2; P.k = START; P.to = START; P.u = 1; }   // caught: back to START
     });
-    f.planes.forEach(function (P) {
-      c.save(); c.translate(P.x, P.y); c.rotate(P.rot); c.globalAlpha = P.dead ? Math.max(0, 1 - (tt - P.dead) / 1.5) : 1;
-      c.fillStyle = "rgba(255,255,255,.9)"; c.beginPath(); c.moveTo(9, 0); c.lineTo(-8, -6); c.lineTo(-4, 0); c.lineTo(-8, 6); c.closePath(); c.fill();
-      c.strokeStyle = "rgba(9,95,224,.8)"; c.lineWidth = 1; c.beginPath(); c.moveTo(9, 0); c.lineTo(-4, 0); c.stroke();
-      c.restore();
+    // out through the EXIT: "Let's talk." becomes "We made it!", back after 6 seconds with a new maze
+    if (f.won && !f.wonDone) {
+      f.wonDone = true; var sw = f.sec && f.sec.querySelector(".fx-swap");
+      if (sw) { sw.classList.add("out"); setTimeout(function () { sw.textContent = "We made it!"; sw.classList.remove("out"); sw.classList.add("won"); }, 260);
+        setTimeout(function () { sw.classList.add("out"); setTimeout(function () { sw.textContent = "Let’s talk."; sw.classList.remove("won"); void sw.offsetWidth; sw.classList.remove("out"); f.mz = null; f.wonDone = false; }, 450); }, 6260); }
+    }
+    // draw (this layer sits above the title, so the corridors stay readable)
+    c.strokeStyle = "rgba(0,127,255,.22)"; c.lineWidth = W < 760 ? 6 : 8; c.lineCap = "round"; c.beginPath();   // thick, soft walls (old arcade feel); the title hides parts of the maze, which is part of the fun
+    for (var j = 0; j < rows; j++) for (var i = 0; i < cols; i++) {
+      var w = Z.g[j * cols + i], X = ox + i * cell, Y = oy + j * cell;
+      if (w[0]) { c.moveTo(X, Y); c.lineTo(X + cell, Y); } if (w[3]) { c.moveTo(X, Y); c.lineTo(X, Y + cell); }
+      if (j === rows - 1 && w[2]) { c.moveTo(X, Y + cell); c.lineTo(X + cell, Y + cell); } if (i === cols - 1 && w[1]) { c.moveTo(X + cell, Y); c.lineTo(X + cell, Y + cell); }
+    }
+    c.stroke();
+    c.font = "600 10px ui-monospace, Menlo, monospace"; c.textAlign = "center"; c.fillStyle = "rgba(195,227,251,.75)";
+    var st0 = cxy(START), ex0 = cxy(EXIT);
+    c.fillText("START", st0[0], st0[1] - 14);
+    if (f.open) { c.fillStyle = "rgba(0,127,255," + (.7 + .3 * Math.sin(tt * 4)).toFixed(2) + ")"; c.fillText("EXIT ↓", ex0[0], ex0[1] + 4); }
+    else { c.fillStyle = "rgba(195,227,251,.35)"; c.fillText("EXIT", ex0[0], ex0[1] + 4); c.strokeStyle = FX_C + ".3)"; c.lineWidth = 2; c.beginPath(); c.moveTo(ex0[0] - cell / 2, oy + rows * cell); c.lineTo(ex0[0] + cell / 2, oy + rows * cell); c.stroke(); }   // closed until every drop is eaten
+    c.textAlign = "right"; c.fillStyle = "rgba(195,227,251,.7)"; c.fillText((f.open ? "EXIT OPEN  " : "") + String(gotN).padStart(2, "0") + "/" + f.pel.length, ox + cols * cell, oy + rows * cell + 18); c.textAlign = "start";
+    f.pel.forEach(function (pe) { var q4 = cxy(pe.k), ga = pe.got ? Math.max(0, 1 - (tt - pe.got) / .35) : 1; if (ga <= 0) return; c.globalAlpha = ga; c.fillStyle = "#ffffff"; c.beginPath(); c.arc(q4[0], q4[1], pe.got ? 3 + 8 * (1 - ga) : 3 + .7 * Math.sin(tt * 4 + pe.k), 0, 6.2832); c.fill(); c.strokeStyle = "rgba(0,127,255,.75)"; c.lineWidth = 1; c.stroke(); c.globalAlpha = 1; });   // blue rim: visible on the white title too
+    f.ch.forEach(function (C) {   // ghosts: one translucent white blot each
+      if (C.x === undefined) return; var R5 = cell * .27;
+      c.fillStyle = "rgba(255,255,255,.2)"; c.beginPath(); c.arc(C.x, C.y, R5, 0, 6.2832);
+      for (var bl = 0; bl < 5; bl++) { var an5 = bl * 1.2566 + tt * 1.5; c.moveTo(C.x + Math.cos(an5) * R5 * .85 + R5 * .32, C.y + Math.sin(an5) * R5 * .85); c.arc(C.x + Math.cos(an5) * R5 * .85, C.y + Math.sin(an5) * R5 * .85, R5 * .32, 0, 6.2832); }
+      c.fill(); 
+      c.fillStyle = "rgba(0,0,85,.5)"; var lx5 = px > C.x ? 1.5 : -1.5; c.beginPath(); c.arc(C.x - R5 * .35 + lx5, C.y - R5 * .15, R5 * .15, 0, 6.2832); c.arc(C.x + R5 * .35 + lx5, C.y - R5 * .15, R5 * .15, 0, 6.2832); c.fill();
     });
-    // mailbox
-    var fl = M.flash ? Math.max(0, 1 - (tt - M.flash) / .6) : 0;
-    c.strokeStyle = FX_C + (.4 + .5 * fl).toFixed(2) + ")"; c.lineWidth = 1.4; c.strokeRect(bx + .5, by + .5, bw, bh);
-    c.fillStyle = "rgba(0,127,255," + (.12 + .4 * fl).toFixed(3) + ")"; c.fillRect(bx + 1, by + 1, bw - 1, bh - 1);
-    c.strokeStyle = FX_C + ".55)"; c.beginPath(); c.moveTo(bx + 6, by + 8); c.lineTo(bx + bw / 2, by + 22); c.lineTo(bx + bw - 6, by + 8); c.stroke();   // envelope flap
-    c.font = "500 10px ui-monospace, Menlo, monospace"; c.fillStyle = FX_C + ".6)"; c.textAlign = "center";
-    c.fillText("MAIL " + Math.min(5, M.got) + "/5", bx + bw / 2, by + bh + 16); c.textAlign = "start";
+    if (f.hit && tt - f.hit < .5) { c.fillStyle = "rgba(255,255,255," + (.12 * (1 - (tt - f.hit) / .5)).toFixed(3) + ")"; c.fillRect(0, 0, W, H); }
+    c.globalAlpha = tt < f.safe && Math.sin(tt * 30) > 0 ? .3 : 1;
+    c.fillStyle = "#ffffff"; c.beginPath(); c.arc(px, py, r, 0, 6.2832); c.fill(); c.globalAlpha = 1;
+    c.strokeStyle = "rgba(0,127,255,.9)"; c.lineWidth = 1.5; c.beginPath(); c.arc(px, py, r + 4 + Math.sin(tt * 5), 0, 6.2832); c.stroke();
   }
   function fxTick(t) {
     fxHeads = fxHeads.filter(function (s) { return document.body.contains(s); });
