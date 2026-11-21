@@ -539,7 +539,8 @@ body.scrolling .work-grid { pointer-events: none; }   /* no hover effects firing
 @media (max-width: 760px) {
   #homeGrid { display: none !important; }
   .m-marq { display: block; }
-  .m-row { display: block; overflow: hidden; }
+  .m-row { display: block; overflow: hidden; touch-action: pan-y; -webkit-user-select: none; user-select: none; }
+  .m-row img { -webkit-user-drag: none; pointer-events: none; }
   .m-track { display: flex; width: max-content; will-change: transform; }
   .m-track .tile { flex: 0 0 66vw; aspect-ratio: 16 / 10; margin: 0; content-visibility: visible; }
   .m-track .tile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
@@ -613,6 +614,6 @@ body.scrolling .work-grid { pointer-events: none; }   /* no hover effects firing
   <div class="lb-bot inner"><span class="label count" id="lbCount"></span></div>
 </div>
 
-<script src="data.js?v=20261121210253"></script>
-<script src="app.js?v=20261121210253"></script>
+<script src="data.js?v=20261121210923"></script>
+<script src="app.js?v=20261121210923"></script>
 </html>

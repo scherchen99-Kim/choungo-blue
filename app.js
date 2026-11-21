@@ -67,9 +67,36 @@
         host.addEventListener("mouseenter", function () { el._mq.hover = true; });
         host.addEventListener("mouseleave", function () { el._mq.hover = false; });
       }
+      if (el.classList.contains("m-track")) swipeRow(el);
       marqs.push(el);
     });
     if (!marqT) marqT = requestAnimationFrame(marqTick);
+  }
+  function wrapX(el, x) { var half = el.scrollWidth / 2; return half ? ((x % half) + half) % half : 0; }
+  // picture rows can be dragged left/right; they glide on a little, then go back to the slow drift
+  function swipeRow(el) {
+    var m = el._mq, row = el.parentNode;
+    row.addEventListener("pointerdown", function (e) {
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      m.drag = { x0: e.clientX, y0: e.clientY, mx: m.x, last: e.clientX, t: performance.now(), v: 0, moved: false }; m.vel = 0;
+    });
+    row.addEventListener("pointermove", function (e) {
+      var d = m.drag; if (!d) return;
+      var dx = e.clientX - d.x0;
+      if (!d.moved && Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(e.clientY - d.y0)) d.moved = true;
+      if (!d.moved) return;
+      var now = performance.now(), dt = Math.max(1, now - d.t);
+      d.v = .7 * d.v + .3 * ((e.clientX - d.last) / dt * 1000); d.last = e.clientX; d.t = now;
+      m.x = wrapX(el, d.mx - dx);
+      el.style.transform = "translate3d(" + (-m.x).toFixed(1) + "px,0,0)";
+    });
+    function end() {
+      var d = m.drag; if (!d) return; m.drag = null;
+      if (d.moved) { m.vel = Math.max(-2500, Math.min(2500, -d.v)); m.suppress = true; setTimeout(function () { m.suppress = false; }, 350); }
+    }
+    row.addEventListener("pointerup", end); row.addEventListener("pointercancel", end); row.addEventListener("pointerleave", end);
+    // a drag is not a tap: don't show the caption or open the picture
+    row.addEventListener("click", function (e) { if (m.suppress) { e.preventDefault(); e.stopPropagation(); m.suppress = false; } }, true);
   }
   var marqLast = 0;
   function marqTick(t) {
@@ -79,10 +106,13 @@
       var m = el._mq; if (m.hover) return;
       var r = el.parentNode.getBoundingClientRect();   // visibility checked directly every frame (no observer, which Safari can miss for very wide rows)
       if (!r.width || r.bottom < -80 || r.top > innerHeight + 80) return;
-      if (el.querySelector(".tile.show")) return;   // a caption is open: hold the row
+      if (!m.loaded) { m.loaded = true; el.querySelectorAll('img[loading="lazy"]').forEach(function (i) { i.loading = "eager"; }); }   // Safari skips lazy pictures inside a moving row
+      if (m.drag) return;   // the finger is moving it
       var half = el.scrollWidth / 2; if (!half) return;
       if (m.start) { m.x = half / 2; m.start = false; }
-      m.x = ((m.x + m.speed * dt * m.dir) % half + half) % half;
+      if (m.vel && Math.abs(m.vel) > 8) { m.x += m.vel * dt; m.vel *= Math.pow(.04, dt); }   // glide after a swipe
+      else if (!el.querySelector(".tile.show")) { m.vel = 0; m.x += m.speed * dt * m.dir; }   // slow drift (held while a caption is open)
+      m.x = ((m.x % half) + half) % half;
       el.style.transform = "translate3d(" + (-m.x).toFixed(1) + "px,0,0)";
     });
     marqT = marqs.length ? requestAnimationFrame(marqTick) : 0;
