@@ -12,13 +12,13 @@
 <style>
 /* Layout: full-bleed black/white bands; edge-to-edge image grids; type does the work, no cards */
 :root {
-  --black: #0c2340;
+  --black: #000055;
   --white: #ffffff;
   --paper: #f3f3f0;
   --grey: #8c8c88;
   --line: #dcdcd7;
   --line-dark: #2a2a2c;
-  --blue: #0a5fe0;          /* CHOUNGO Blue — 단 한 곳의 강조색 */
+  --blue: #007fff;          /* CHOUNGO Blue — 단 한 곳의 강조색 */
   --display: "Archivo", "Helvetica Neue", Arial, sans-serif;
   --body: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
   --gutter: max(16px, env(safe-area-inset-left, 0px));
@@ -379,15 +379,15 @@ form.brief { display: grid; gap: 28px; }
 .gallery button { background: transparent; }
 
 /* ---------- CHOUNGO BLUE: dark bands become the brand blue ---------- */
-.dark { background: linear-gradient(180deg, #0a5fe0 0%, #0950c4 100%); }
+.dark { background: linear-gradient(180deg, #007fff 0%, #006ad9 100%); }
 .dark p, .dark .svc p, .dark .stat-strip p, .cta p { color: rgba(255,255,255,.8); }
 .dark .label, .dark .svc .label, .dark .sec-head .label { color: rgba(255,255,255,.72) !important; }
 .dark .services, .dark .svc, .dark .stat-strip, .dark .stat-strip > div, .dark .eq-list, .dark .eq-list li { border-color: rgba(255,255,255,.24) !important; }
-.dark .btn-outline:hover { background: #fff; color: #0a5fe0; }
+.dark .btn-outline:hover { background: #fff; color: #007fff; }
 .sec-head h2, .page-head h1 { color: inherit; }
 .section:not(.dark) .sec-head .label { color: var(--blue); }
 .btn-line:hover, .btn-solid { background: var(--blue); border-color: var(--blue); color: #fff; }
-.site-footer { background: #0c2340; }
+.site-footer { background: #000055; }
 .dark { --grey: rgba(255,255,255,.72); }
 .dark p, .dark .body p, .dark .eq-list li span:last-child, .dark .svc p, .dark .stat-strip p { color: rgba(255,255,255,.8) !important; }
 @media (prefers-reduced-motion: reduce) {
@@ -441,6 +441,6 @@ form.brief { display: grid; gap: 28px; }
   <div class="lb-bot inner"><span class="label count" id="lbCount"></span><span class="label" style="color:var(--grey)">Sample visual</span></div>
 </div>
 
-<script src="data.js?v=20261121131301"></script>
-<script src="app.js?v=20261121131301"></script>
+<script src="data.js?v=20261121141607"></script>
+<script src="app.js?v=20261121141607"></script>
 </html>

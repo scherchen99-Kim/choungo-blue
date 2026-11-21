@@ -177,7 +177,7 @@
     var T = { grid: [0, .8], aS: [.5, 2.3], aP: [2.2, 3.6], bS: [3.3, 4.7], bL: [4.6, 6.6], fade: [8.8, 10.5] };
     var STEP_T = [0, .5, 2.2, 3.6, 6.6, 9.6];
     var CMYK = ["#00a6e2", "#e4007f", "#ffe100", "#ffffff"];
-    var BLUE = "#0c2340";
+    var BLUE = "#000055";
     function clamp(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
     function prog(t, r) { return clamp((t - r[0]) / (r[1] - r[0])); }
     function ease(x) { return x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; }
@@ -231,10 +231,10 @@
     function frame(t) {
       ctx.clearRect(0, 0, W, H);
       // CHOUNGO BLUE background: a slow chain of ripple experiments; the ( O ) mark surfaces now and then and dissolves again
-      var BG = "#0a5fe0";
+      var BG = "#007fff";
       // navy at the top (matches the header bar) flowing into the bright blue
       var bgG = ctx.createLinearGradient(0, 0, 0, H);
-      bgG.addColorStop(0, "#0c2340"); bgG.addColorStop(.12, "#0c2340"); bgG.addColorStop(.62, BG); bgG.addColorStop(1, BG);
+      bgG.addColorStop(0, "#000055"); bgG.addColorStop(.12, "#000055"); bgG.addColorStop(.62, BG); bgG.addColorStop(1, BG);
       ctx.fillStyle = bgG; ctx.fillRect(0, 0, W, H);
       var LOOPS = 64, now = (performance.now() - cbT0) / 1000, sec = now % LOOPS;
       var R = Math.max(46, Math.min(W, H) * .1), r = R * .643, th = R - r, d = R * .63;
@@ -255,7 +255,7 @@
           var te = t - rr / v; if (te < t0 || te > t0 + dur) continue;
           var w = env(te, t0, t0 + dur, Math.min(1.5, dur / 3), Math.min(2, dur / 3)) * (1 - rr / maxR);
           if (w <= .002) continue;
-          var p = pos(te); band(p[0], p[1], rr, th, "rgba(255,255,255," + (BASE * amp * w) + ")");
+          var p = pos(te); band(p[0], p[1], rr, th, "rgba(195,227,251," + (.07 * w) + ")");
         }
       }
       function at(x, y) { return function () { return [x, y]; }; }
@@ -277,7 +277,7 @@
           var ag = age; if (ag <= 0) continue;
           var rr2 = th * .5 + ag * V; if (rr2 > maxR) continue;
           var fa = Math.min(1, ag / .25) * (1 - rr2 / maxR);
-          band(ck.x, ck.y, rr2, th, "rgba(255,255,255," + (BASE * 1.1 * fa) + ")");   // same opacity as the background ripples
+          band(ck.x, ck.y, rr2, th, "rgba(195,227,251," + (.07 * fa) + ")");   // #c3e3fb at 7%, same as the background ripples
         }
       }
       var fadeOut = 1 - prog(t, T.fade);
@@ -326,8 +326,8 @@
       } else if (kind === 1) {
         // design: one cursor. arrow selects the old copy and drags the corner to enlarge it,
         // then it turns into the pen tool, draws the new outlines with anchor points, the fill pours in and a colour sheen passes
-        function arrow(x, y) { ctx.save(); ctx.translate(x, y); ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, 22); ctx.lineTo(6, 16); ctx.lineTo(10, 25); ctx.lineTo(14, 23); ctx.lineTo(10, 15); ctx.lineTo(17, 15); ctx.closePath(); ctx.fillStyle = "#fff"; ctx.fill(); ctx.lineWidth = 1.4; ctx.strokeStyle = "#0c2340"; ctx.stroke(); ctx.restore(); }
-        function penIcon(x, y) { ctx.save(); ctx.translate(x, y); ctx.rotate(-Math.PI / 4); ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-7, 12); ctx.lineTo(-5, 22); ctx.lineTo(5, 22); ctx.lineTo(7, 12); ctx.closePath(); ctx.fillStyle = "#fff"; ctx.fill(); ctx.lineWidth = 1.4; ctx.strokeStyle = "#0c2340"; ctx.stroke(); ctx.beginPath(); ctx.arc(0, 11, 2, 0, Math.PI * 2); ctx.fillStyle = "#0c2340"; ctx.fill(); ctx.fillStyle = "#fff"; ctx.strokeStyle = "#0c2340"; ctx.fillRect(-6, 22, 12, 6); ctx.strokeRect(-6, 22, 12, 6); ctx.restore(); }
+        function arrow(x, y) { ctx.save(); ctx.translate(x, y); ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, 22); ctx.lineTo(6, 16); ctx.lineTo(10, 25); ctx.lineTo(14, 23); ctx.lineTo(10, 15); ctx.lineTo(17, 15); ctx.closePath(); ctx.fillStyle = "#fff"; ctx.fill(); ctx.lineWidth = 1.4; ctx.strokeStyle = "#000055"; ctx.stroke(); ctx.restore(); }
+        function penIcon(x, y) { ctx.save(); ctx.translate(x, y); ctx.rotate(-Math.PI / 4); ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-7, 12); ctx.lineTo(-5, 22); ctx.lineTo(5, 22); ctx.lineTo(7, 12); ctx.closePath(); ctx.fillStyle = "#fff"; ctx.fill(); ctx.lineWidth = 1.4; ctx.strokeStyle = "#000055"; ctx.stroke(); ctx.beginPath(); ctx.arc(0, 11, 2, 0, Math.PI * 2); ctx.fillStyle = "#000055"; ctx.fill(); ctx.fillStyle = "#fff"; ctx.strokeStyle = "#000055"; ctx.fillRect(-6, 22, 12, 6); ctx.strokeRect(-6, 22, 12, 6); ctx.restore(); }
         function handles(x0, y0, x1, y1) {
           ctx.strokeStyle = CYAN; ctx.lineWidth = 1.5; ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
           ctx.fillStyle = "#fff"; [[x0, y0], [x1, y0], [x0, y1], [x1, y1], [(x0 + x1) / 2, y0], [(x0 + x1) / 2, y1], [x0, (y0 + y1) / 2], [x1, (y0 + y1) / 2]].forEach(function (p) { ctx.fillRect(p[0] - 4, p[1] - 4, 8, 8); ctx.strokeRect(p[0] - 4, p[1] - 4, 8, 8); });
