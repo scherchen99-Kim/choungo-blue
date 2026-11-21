@@ -268,7 +268,13 @@
           f.rings.push({ x: T.x, y: T.y, t0: tt, hit: true });
           if (f.hits === 20 && f.sec) {   // 20 hits: "Production floor." turns into "Production wins."
             var sw = f.sec.querySelector('.fx-swap');
-            if (sw && !sw.classList.contains('won')) { sw.classList.add('out'); setTimeout(function () { sw.textContent = 'wins.'; sw.classList.remove('out'); sw.classList.add('won'); }, 260); }
+            if (sw && !sw.classList.contains('won')) {
+              sw.classList.add('out'); setTimeout(function () { sw.textContent = 'wins.'; sw.classList.remove('out'); sw.classList.add('won'); }, 260);
+              setTimeout(function () {   // 6 seconds later: softly back to "Production floor." and a fresh round
+                sw.classList.add('out');
+                setTimeout(function () { sw.textContent = 'floor.'; sw.classList.remove('won'); void sw.offsetWidth; sw.classList.remove('out'); f.hits = 0; }, 450);
+              }, 6260);
+            }
           }
           var np = wp(); T.x = np[0]; T.y = np[1]; T.to = wp(); T.trail = [];
         } else f.rings.push({ x: cx, y: cy, t0: tt });
