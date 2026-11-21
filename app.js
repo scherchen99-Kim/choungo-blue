@@ -118,6 +118,42 @@
     marqT = marqs.length ? requestAnimationFrame(marqTick) : 0;
     if (!marqT) marqLast = 0;
   }
+  // page heads (About, Portfolio, Facilities, Contact): a quiet halftone dot field in the empty navy space.
+  // slow diagonal bands of slightly bigger dots drift through (like a print screen), and dots swell a little around the pointer
+  var fxHeads = [], fxT = 0, fxPtr = { x: -9999, y: -9999 };
+  window.addEventListener("pointermove", function (e) { fxPtr.x = e.clientX; fxPtr.y = e.clientY; }, { passive: true });
+  window.addEventListener("pointerleave", function () { fxPtr.x = fxPtr.y = -9999; });
+  window.addEventListener("pointerup", function (e) { if (e.pointerType !== "mouse") fxPtr.x = fxPtr.y = -9999; }, { passive: true });   // a finger lifts: no swell left behind
+  function headFx() {
+    document.querySelectorAll("#view .page-head").forEach(function (sec) {
+      if (sec._fx) return;
+      var cv = document.createElement("canvas"); cv.className = "head-fx"; cv.setAttribute("aria-hidden", "true");
+      sec.insertBefore(cv, sec.firstChild); sec._fx = { cv: cv, ctx: cv.getContext("2d"), w: 0, h: 0 };
+      fxHeads.push(sec);
+    });
+    if (!fxT && fxHeads.length) fxT = requestAnimationFrame(fxTick);
+  }
+  function fxTick(t) {
+    fxHeads = fxHeads.filter(function (s) { return document.body.contains(s); });
+    var tt = t / 1000;
+    fxHeads.forEach(function (sec) {
+      var r = sec.getBoundingClientRect(); if (r.bottom < 0 || r.top > innerHeight) return;
+      var f = sec._fx, dpr = Math.min(window.devicePixelRatio || 1, 1.5), W = Math.round(r.width), H = Math.round(r.height);
+      if (f.w !== W || f.h !== H) { f.w = W; f.h = H; f.cv.width = W * dpr; f.cv.height = H * dpr; }
+      var c = f.ctx; c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, W, H);
+      var gap = W < 760 ? 20 : 26, mx = fxPtr.x - r.left, my = fxPtr.y - r.top;
+      c.fillStyle = "rgba(195,227,251,.16)"; c.beginPath();
+      for (var y = gap / 2; y < H; y += gap) for (var x = gap / 2; x < W; x += gap) {
+        var b = Math.sin((x * .6 + y) * .012 - tt * .7); b = b > 0 ? b * b * b : 0;        // a travelling band
+        var rad = .7 + 1.9 * b;
+        var dx = x - mx, dy = y - my, d2 = dx * dx + dy * dy;
+        if (d2 < 32400) { var k = 1 - Math.sqrt(d2) / 180; rad += 3.2 * k * k; }        // swell near the pointer
+        c.moveTo(x + rad, y); c.arc(x, y, rad, 0, 6.2832);
+      }
+      c.fill();
+    });
+    fxT = fxHeads.length ? requestAnimationFrame(fxTick) : 0;
+  }
   function webIdx(p) { return D.projects.filter(function (q) { return q.category === "web"; }).indexOf(p); }   // staggers the web previews
   function tile(p, i) {
     var motion = p.category === "web" ? " pan" : (!p.cover && KB.indexOf(p.images[0]) >= 0 ? " kb" : "");   // curated covers stay still
@@ -1012,7 +1048,7 @@
       if (R.r === "home") { startHero(); bindHomeGrid(); bindFacRot(); }
       if (R.r === "portfolio") bindPortfolio();
       watchTiles(document.getElementById("view"));
-      startMarq();
+      startMarq(); headFx();
       if (R.r === "work") bindGallery(R.slug);
       if (R.r === "facilities") bindFacilities();
       if (R.r === "contact") bindContact();
