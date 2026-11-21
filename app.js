@@ -137,8 +137,11 @@
     if (!fxT && fxHeads.length) fxT = requestAnimationFrame(fxTick);
   }
   var FX_C = "rgba(195,227,251,";
-  function fxDots(c, W, H, tt, mx, my) {   // About: halftone screen, bands of bigger dots drift across
-    var gap = W < 760 ? 11 : 14; c.fillStyle = FX_C + ".18)"; c.beginPath();   // fine screen
+  function fxDots(c, W, H, tt, mx, my, f) {   // About: halftone screen + "CMYK mole": ink dots pop up, catch all four colours
+    var dt = f.last ? Math.min(.05, tt - f.last) : 0; f.last = tt;
+    var gap = W < 760 ? 11 : 14, INK = { C: "#00a6e2", M: "#e4007f", Y: "#ffe100", K: "#0b0b0b" }, ORDER = ["C", "M", "Y", "K"];
+    if (!f.got) { f.got = {}; f.moles = []; f.next = tt + 1.5; f.splash = []; f.win = 0; f.clk = fxPtr.clk || 0; }
+    c.fillStyle = FX_C + ".18)"; c.beginPath();
     for (var y = gap / 2; y < H; y += gap) for (var x = gap / 2; x < W; x += gap) {
       var b = Math.sin((x * .6 + y) * .012 - tt * .7); b = b > 0 ? b * b * b : 0;
       var rad = .6 + 1.5 * b, dx = x - mx, dy = y - my, d2 = dx * dx + dy * dy;
@@ -146,6 +149,67 @@
       c.moveTo(x + rad, y); c.arc(x, y, rad, 0, 6.2832);
     }
     c.fill();
+    // moles: one ink dot at a time pops out of the screen and hides again (missing colours come up more often)
+    if (!f.win && tt > f.next && f.moles.length < 1) {
+      var need = ORDER.filter(function (q) { return !f.got[q]; }), pool = need.concat(need, ORDER);
+      var col = pool[Math.floor(Math.random() * pool.length)];
+      var gx = Math.floor((40 + Math.random() * (W - 80)) / gap) * gap + gap / 2, gy = Math.floor((110 + Math.random() * (H - 150)) / gap) * gap + gap / 2;
+      f.moles.push({ x: gx, y: gy, col: col, t0: tt, dur: 1.9 });
+    }
+    f.moles = f.moles.filter(function (m) { if (tt - m.t0 > m.dur) { f.next = tt + .5 + Math.random() * .9; return false; } return true; });
+    // a click or tap
+    if (fxPtr.clk && fxPtr.clk !== f.clk) {
+      f.clk = fxPtr.clk; var cx = fxPtr.cx - f.rl, cy = fxPtr.cy - f.rt;
+      f.moles = f.moles.filter(function (m) {
+        if (Math.hypot(cx - m.x, cy - m.y) > (W < 760 ? 34 : 28)) return true;
+        f.got[m.col] = true; f.splash.push({ x: m.x, y: m.y, col: m.col, t0: tt }); f.next = tt + .6;
+        if (ORDER.every(function (q) { return f.got[q]; })) {   // all four inks: full-colour print, "We make it." becomes "We make win!"
+          f.win = tt;
+          var sw = f.sec && f.sec.querySelector(".fx-swap");
+          if (sw) { sw.classList.add("out"); setTimeout(function () { sw.textContent = "win!"; sw.classList.remove("out"); sw.classList.add("won"); }, 260);
+            setTimeout(function () { sw.classList.add("out"); setTimeout(function () { sw.textContent = "it."; sw.classList.remove("won"); void sw.offsetWidth; sw.classList.remove("out"); }, 450); }, 6260); }
+        }
+        return false;
+      });
+    }
+    if (f.win && tt - f.win > 6.7) { f.win = 0; f.got = {}; f.next = tt + 1; }
+    // ink splashes: the caught colour spreads over the nearby dots, then fades
+    f.splash = f.splash.filter(function (sp) { return tt - sp.t0 < 1.2; });
+    f.splash.forEach(function (sp) {
+      var u = (tt - sp.t0) / 1.2, R = 30 + 90 * Math.sqrt(u); c.fillStyle = INK[sp.col]; c.globalAlpha = .75 * (1 - u); c.beginPath();
+      for (var yy = Math.max(gap / 2, Math.floor((sp.y - R) / gap) * gap + gap / 2); yy < Math.min(H, sp.y + R); yy += gap)
+        for (var xx = Math.max(gap / 2, Math.floor((sp.x - R) / gap) * gap + gap / 2); xx < Math.min(W, sp.x + R); xx += gap) {
+          var dd = Math.hypot(xx - sp.x, yy - sp.y); if (dd > R) continue; var rr = 2.6 * (1 - dd / R) + .6; c.moveTo(xx + rr, yy); c.arc(xx, yy, rr, 0, 6.2832);
+        }
+      c.fill(); c.globalAlpha = 1;
+    });
+    // the win: the whole screen briefly prints in four colours
+    if (f.win) {
+      var wu = Math.min(1, (tt - f.win) / 6), wa = wu < .15 ? wu / .15 : 1 - (wu - .15) / .85;
+      ORDER.forEach(function (q, qi) {
+        c.fillStyle = INK[q]; c.globalAlpha = .45 * wa; c.beginPath();
+        for (var y2 = gap / 2, j2 = 0; y2 < H; y2 += gap, j2++) for (var x2 = gap / 2, i2 = 0; x2 < W; x2 += gap, i2++) {
+          if ((i2 + j2 * 2) % 4 !== qi) continue; var r2 = 1.1 + 1.2 * Math.sin((x2 + y2) * .02 - tt * 2) ** 2; c.moveTo(x2 + r2, y2); c.arc(x2, y2, r2, 0, 6.2832);
+        }
+        c.fill();
+      });
+      c.globalAlpha = 1;
+    }
+    // the moles themselves
+    f.moles.forEach(function (m) {
+      var u = (tt - m.t0) / m.dur, pop = u < .15 ? u / .15 : u > .8 ? (1 - u) / .2 : 1, rr = 1 + 7 * pop;
+      c.fillStyle = INK[m.col]; c.beginPath(); c.arc(m.x, m.y, rr, 0, 6.2832); c.fill();
+      if (m.col === "K") { c.strokeStyle = "rgba(255,255,255,.55)"; c.lineWidth = 1; c.stroke(); }
+    });
+    // the C M Y K tally, bottom right
+    c.font = "700 10px ui-monospace, Menlo, monospace"; c.textAlign = "center"; c.textBaseline = "middle";
+    ORDER.forEach(function (q, qi) {
+      var bx = W - 24 - (3 - qi) * 22, by = H - 22;
+      if (f.got[q]) { c.fillStyle = INK[q]; c.fillRect(bx - 8, by - 8, 16, 16); if (q === "K") { c.strokeStyle = "rgba(255,255,255,.5)"; c.lineWidth = 1; c.strokeRect(bx - 7.5, by - 7.5, 15, 15); } c.fillStyle = q === "Y" ? "#000055" : "#ffffff"; }
+      else { c.strokeStyle = FX_C + ".3)"; c.lineWidth = 1; c.strokeRect(bx - 7.5, by - 7.5, 15, 15); c.fillStyle = FX_C + ".45)"; }
+      c.fillText(q, bx, by + .5);
+    });
+    c.textAlign = "start"; c.textBaseline = "alphabetic";
   }
   function fxGrid(c, W, H, tt, mx, my, f) {   // Portfolio: a faint self-playing brick-breaker with power-ups; the pointer takes the paddle
     var dt = f.last ? Math.min(.05, tt - f.last) : 0; f.last = tt;
@@ -333,7 +397,7 @@
       if (kind === "grid") fxGrid(c, W, H, tt, mx, my, f);
       else if (kind === "path") fxPath(c, W, H, tt, mx, my, f);
       else if (kind === "wave") fxWave(c, W, H, tt, mx, my);
-      else fxDots(c, W, H, tt, mx, my);
+      else fxDots(c, W, H, tt, mx, my, f);
     });
     fxT = fxHeads.length ? requestAnimationFrame(fxTick) : 0;
   }
@@ -896,7 +960,7 @@
     return '' +
     '<section class="page-head inner" data-fx="dots">' +
       '<span class="label" style="color:var(--grey)">About / Services</span>' +
-      '<h1 class="display" style="margin-top:20px">We design it.<br>We make it.</h1>' +
+      '<h1 class="display" style="margin-top:20px">We design it.<br>We make <span class="fx-swap">it.</span></h1>' +
       '<div class="row"><span></span><p>CHOUNGO BLUE는 디자인 스튜디오의 감각과 제작사의 실행력을 함께 가진 회사입니다. 브랜드가 매장과 거리에서 사람을 만나는 모든 접점을 기획하고, 디자인하고, 직접 만듭니다.</p></div>' +
     '</section>' +
     '<section class="section dark" style="padding-top:0">' +
