@@ -172,7 +172,7 @@
     var stepEls = document.querySelectorAll("#heroSteps li");
     var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     var W = 0, H = 0, dpr = 1, size = 100, pad = 24, groups = [], sparks = [];
-    var LOOP = 7, cbT0 = performance.now(), cbMark = null, cbTxt = null, cbCh = 0, cbPrev = -1, cbG = [], cbK = 0;
+    var LOOP = 7, cbT0 = performance.now(), cbMark = null, cbTxt = null, cbClicks = [], cbCh = 0, cbPrev = -1, cbG = [], cbK = 0;
     // timeline (seconds)
     var T = { grid: [0, .8], aS: [.5, 2.3], aP: [2.2, 3.6], bS: [3.3, 4.7], bL: [4.6, 6.6], fade: [8.8, 10.5] };
     var STEP_T = [0, .5, 2.2, 3.6, 6.6, 9.6];
@@ -267,38 +267,13 @@
       emit(sec, 13, 16, function (t) { return [W * (.72 + .06 * Math.cos(t * .22)), H * (.5 + .12 * Math.sin(t * .27))]; }, 1);
       // C) travelling source: rings bunch up ahead and stretch behind (Doppler) (26-38s)
       emit(sec, 26, 11, function (t) { var p = e3((t - 26) / 11); return [W * (-.05 + 1.1 * p), H * (.62 - .2 * Math.sin(p * Math.PI))]; }, 1, GAP * .9, V * 1.4);
-      // D) three wandering sources drift onto the logo centres (34-44s)
-      var homes = [cxL, cx, cxR];
-      homes.forEach(function (hx, i) {
-        var ox = W * [.15, .5, .85][i], oy = H * [.75, .85, .7][i];
-        emit(sec, 34 + i * .4, 6.5, function (t) { var p = e3((t - 34) / 6); return [ox + (hx - ox) * p, oy + (cy - oy) * p]; }, .9);
-      });
-      // E) the logo is a wavefront: one ring from each centre slows as it reaches the logo radius,
-      //    lines up for a breath (reads as the ( O ) mark), then keeps travelling outward like any wave
-      var tB = 39.5, tA = 44, tH = 46.5;
-      if (sec > tB && sec < 60) {
-        var rr;
-        if (sec < tA) rr = R * (1 - Math.pow(1 - (sec - tB) / (tA - tB), 3));
-        else if (sec < tH) rr = R * (1 + .012 * Math.sin((sec - tA) * 2.4));
-        else { var u = sec - tH; rr = R + V * .5 * u * u / (1 + u * .35); }
-        var heroA = .17 * e3((sec - tB) / 2) * Math.max(0, 1 - (rr - R) / (maxR * .6));
-        var half = e3((sec - (tA - 1.5)) / 1.5) * (1 - e3((sec - tH) / 1.6)); // inner halves of the side rings give way only while aligned
-        if (heroA > .002) {
-          if (!cbMark) cbMark = document.createElement("canvas");
-          if (cbMark.width !== cv.width || cbMark.height !== cv.height) { cbMark.width = cv.width; cbMark.height = cv.height; }
-          var m = cbMark.getContext("2d"); m.setTransform(dpr, 0, 0, dpr, 0, 0); m.clearRect(0, 0, W, H);
-          var ctx0 = ctx; ctx = m;
-          band(cx, cy, rr, th, "#fff");
-          ctx.save(); ctx.beginPath(); ctx.rect(0, 0, cxL, H); ctx.clip(); band(cxL, cy, rr, th, "#fff"); ctx.restore();
-          ctx.save(); ctx.beginPath(); ctx.rect(cxR, 0, W - cxR, H); ctx.clip(); band(cxR, cy, rr, th, "#fff"); ctx.restore();
-          ctx.save(); ctx.globalAlpha = 1 - half; ctx.beginPath(); ctx.rect(cxL, 0, W - cxL, H); ctx.clip(); band(cxL, cy, rr, th, "#fff"); ctx.restore();
-          ctx.save(); ctx.globalAlpha = 1 - half; ctx.beginPath(); ctx.rect(0, 0, cxR, H); ctx.clip(); band(cxR, cy, rr, th, "#fff"); ctx.restore();
-          ctx = ctx0;
-          ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = heroA; ctx.drawImage(cbMark, 0, 0); ctx.restore();
-        }
+      // D) a second rain fills the middle of the loop (34-56s)
+      for (var i2 = 0; i2 < 12; i2++) emit(sec, 34 + i2 * 1.8, 2.2, at(W * (.08 + .84 * rnd(i2 + 101)), H * (.1 + .8 * rnd(i2 + 131))), 1.1);
+      // E) visitor clicks: concentric rings from the clicked point (real time, not looped)
+      for (var ci = cbClicks.length - 1; ci >= 0; ci--) {
+        var ck = cbClicks[ci]; if (now - ck.t > 16) { cbClicks.splice(ci, 1); continue; }
+        emit(now, ck.t, 1.4, at(ck.x, ck.y), 1.9);
       }
-      // trailing rings follow the wavefront out from the three centres
-      homes.forEach(function (hx) { emit(sec, tH + .6, 4.5, at(hx, cy), .9); });
       var fadeOut = 1 - prog(t, T.fade);
       ctx.globalAlpha = 1;
       // headline: four chapters, one tool each — no fades, the tool itself replaces the words
@@ -466,7 +441,14 @@
     }
     function onResize() { layout(); if (reduce) { frame(8); setSteps(9.5); } }
     window.addEventListener("resize", onResize);
-    heroCleanup = function () { window.removeEventListener("resize", onResize); };
+    var heroEl = document.getElementById("hero");
+    function onHeroClick(e) {
+      var r = cv.getBoundingClientRect();
+      cbClicks.push({ x: e.clientX - r.left, y: e.clientY - r.top, t: (performance.now() - cbT0) / 1000 });
+      if (cbClicks.length > 12) cbClicks.shift();
+    }
+    if (heroEl) heroEl.addEventListener("pointerdown", onHeroClick);
+    heroCleanup = function () { window.removeEventListener("resize", onResize); if (heroEl) heroEl.removeEventListener("pointerdown", onHeroClick); };
     var go = function () {
       layout();
       if (reduce) { frame(8); setSteps(9.5); return; }
