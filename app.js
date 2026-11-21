@@ -144,19 +144,46 @@
     }
     c.fill();
   }
-  function fxGrid(c, W, H, tt, mx, my, f) {   // Portfolio: a layout grid with crop marks; frames light up one by one like work loading in
-    var cw = Math.max(44, W / 22), ch = cw * .625, cols = Math.ceil(W / cw), rows = Math.ceil(H / ch);   // tighter grid
-    f.cells = f.cells || []; f.next = f.next || 0;
-    if (tt > f.next) { f.cells.push({ i: Math.floor(Math.random() * cols), j: Math.floor(Math.random() * rows), t0: tt }); f.next = tt + .28; }
-    f.cells = f.cells.filter(function (q) { return tt - q.t0 < 2.6; });
-    var hi = Math.floor(mx / cw), hj = Math.floor(my / ch);
-    f.cells.concat(mx > 0 && my > 0 && my < H ? [{ i: hi, j: hj, hover: true }] : []).forEach(function (q) {
-      var a = q.hover ? .28 : Math.sin(Math.min(1, (tt - q.t0) / 2.6) * Math.PI) * .22;
-      c.fillStyle = "rgba(9,95,224," + a.toFixed(3) + ")"; c.fillRect(q.i * cw + 3, q.j * ch + 3, cw - 6, ch - 6);
-    });
-    c.strokeStyle = FX_C + ".2)"; c.lineWidth = 1; c.beginPath();
-    for (var j = 0; j <= rows; j++) for (var i = 0; i <= cols; i++) { var x = i * cw, y = j * ch; c.moveTo(x - 4, y); c.lineTo(x + 4, y); c.moveTo(x, y - 4); c.lineTo(x, y + 4); }
-    c.stroke();
+  function fxGrid(c, W, H, tt, mx, my, f) {   // Portfolio: a faint self-playing brick-breaker; the pointer takes the paddle
+    var dt = f.last ? Math.min(.05, tt - f.last) : 0; f.last = tt;
+    var top = 104, cols = W < 760 ? 8 : 16, rows = W < 760 ? 4 : 5, gap = 4, bw = (W - 32) / cols, bh = W < 760 ? 16 : 22;
+    if (!f.bk || f.bk.cols !== cols || f.bk.W !== W) {
+      f.bk = { cols: cols, W: W, live: [], hit: [] };
+      for (var q = 0; q < cols * rows; q++) { f.bk.live.push(1); f.bk.hit.push(0); }
+      f.ball = { x: W * .5, y: H * .7, vx: 210, vy: -260 }; f.pad = W * .5;
+    }
+    var B = f.ball, K = f.bk, pw = W < 760 ? 80 : 130, py = H - 34, r = 4;
+    var hasPtr = mx > 0 && mx < W && my > 0 && my < H;
+    var target = hasPtr ? mx : B.x + B.vx * .12;
+    f.pad += (target - f.pad) * Math.min(1, dt * (hasPtr ? 14 : 4.5));
+    f.pad = Math.max(pw / 2 + 8, Math.min(W - pw / 2 - 8, f.pad));
+    // move the ball in small steps so it never skips a brick
+    var steps = Math.max(1, Math.ceil(Math.hypot(B.vx, B.vy) * dt / 6));
+    for (var st = 0; st < steps; st++) {
+      var sx = B.vx * dt / steps, sy = B.vy * dt / steps; B.x += sx; B.y += sy;
+      if (B.x < r) { B.x = r; B.vx = Math.abs(B.vx); } if (B.x > W - r) { B.x = W - r; B.vx = -Math.abs(B.vx); }
+      if (B.y < top - 30) { B.y = top - 30; B.vy = Math.abs(B.vy); }
+      if (B.vy > 0 && B.y + r > py && B.y + r < py + 10 && Math.abs(B.x - f.pad) < pw / 2 + r) {   // paddle: angle depends on where it lands
+        var u = (B.x - f.pad) / (pw / 2), sp = Math.hypot(B.vx, B.vy); B.vx = sp * .8 * u; B.vy = -Math.sqrt(Math.max(1, sp * sp - B.vx * B.vx));
+      }
+      if (B.y > H + 20) { B.x = f.pad; B.y = py - 20; B.vx = (Math.random() < .5 ? -1 : 1) * 200; B.vy = -260; }   // missed: serve again
+      var ci = Math.floor((B.x - 16) / bw), cj = Math.floor((B.y - top) / (bh + gap));
+      if (ci >= 0 && ci < cols && cj >= 0 && cj < rows && K.live[cj * cols + ci]) {
+        K.live[cj * cols + ci] = 0; K.hit[cj * cols + ci] = tt;
+        var cx = 16 + ci * bw + bw / 2, cy = top + cj * (bh + gap) + bh / 2;
+        if (Math.abs(B.x - cx) / bw > Math.abs(B.y - cy) / bh) B.vx = -B.vx; else B.vy = -B.vy;
+      }
+    }
+    if (K.live.every(function (v) { return !v; })) { if (!K.done) K.done = tt; if (tt - K.done > 1.2) { K.live = K.live.map(function () { return 1; }); K.done = 0; } }
+    for (var j = 0; j < rows; j++) for (var i = 0; i < cols; i++) {
+      var k = j * cols + i, x = 16 + i * bw + gap / 2, y = top + j * (bh + gap), al = K.live[k] ? 1 : Math.max(0, 1 - (tt - K.hit[k]) / .5);
+      if (K.done && K.live[k]) al = Math.min(1, (tt - K.done - 1.2) / .6);
+      if (al <= 0) continue;
+      c.fillStyle = "rgba(9,95,224," + (.1 * al).toFixed(3) + ")"; c.fillRect(x, y, bw - gap, bh);
+      c.strokeStyle = FX_C + (.08 * al).toFixed(3) + ")"; c.lineWidth = 1; c.strokeRect(x + .5, y + .5, bw - gap - 1, bh - 1);
+    }
+    c.fillStyle = FX_C + ".22)"; c.fillRect(f.pad - pw / 2, py, pw, 5);
+    c.fillStyle = "rgba(255,255,255,.38)"; c.beginPath(); c.arc(B.x, B.y, r, 0, 6.2832); c.fill();
   }
   function fxPath(c, W, H, tt, mx, my, f) {   // Facilities: a CNC tool head cutting a pocket path, plus a machine crosshair with coordinates
     if (!f.path || f.pw !== W || f.ph !== H) {
