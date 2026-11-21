@@ -314,28 +314,18 @@
       //   1 design:   old copy is selected and deleted, the pen tool draws outlines with anchor points, then the fill pours in
       //   2 print:    a screen-print squeegee pulls the new ink across
       //   3 finish:   a laser head cuts the old letters away and leaves the new
-      var cur = cbG[cbCh], prv = cbPrev >= 0 ? cbG[cbPrev] : null, WHITE = "#ffffff", CYAN = "#095fe0";   // point colour on the navy hero
+      var cur = cbG[cbCh], prv = cbPrev >= 0 ? cbG[cbPrev] : null, WHITE = "#ffffff", CYAN = "#095fe0";
+      function colOf(ch) { return ch % 2 === 0 ? "#007fff" : WHITE; }   // chapters 1 and 3 in blue, 2 and 4 in white
+      var CUR = colOf(cbCh), PRV = cbPrev >= 0 ? colOf(cbPrev) : WHITE;   // point colour on the navy hero
       function linesOf(g) { return g ? g[0].lines.concat(g[1].lines) : []; }
-      function clipX(g, x0, x1) { ctx.save(); ctx.beginPath(); ctx.rect(x0, 0, x1 - x0, H); ctx.clip(); drawText(g, "fill", WHITE); ctx.restore(); }
+      function clipX(g, x0, x1, col) { ctx.save(); ctx.beginPath(); ctx.rect(x0, 0, x1 - x0, H); ctx.clip(); drawText(g, "fill", col || CUR); ctx.restore(); }
       function both(fn) { fn(cur[0], 0); fn(cur[1], 1); }
       var INK = ["#ffe58a", "#ffb3cd", "#a9e7ff", "#ffcb9a", "#aef0c8", "#ffb4ab", "#e6f5a0", "#d6c8ff", "#ffd9a0", "#a8f2e6", "#f7c0f0", "#c4e3ff"];   // pastel ink, a different one for each letter
-      function paint(g, gi, chap) {
-        if (chap !== 2 || gi !== 0) { drawText(g, "fill", WHITE); return; }
-        drawText(g, "fill", "#007fff"); return;   // TRUE COLORS printed in the brand blue
-        setFont(size); var n = 0;
-        g.lines.forEach(function (l) {
-          for (var c = 0; c < l.text.length; c++) {
-            if (l.text[c] === " ") continue;
-            var x0 = pad + ctx.measureText(l.text.slice(0, c)).width, x1 = pad + ctx.measureText(l.text.slice(0, c + 1)).width;
-            ctx.save(); ctx.beginPath(); ctx.rect(x0 - .5, l.y - size, x1 - x0 + 1, size * 1.3); ctx.clip();
-            ctx.fillStyle = INK[n++ % INK.length]; ctx.fillText(l.text, pad, l.y); ctx.restore();
-          }
-        });
-      }
+      function paint(g, gi, chap) { drawText(g, "fill", colOf(chap)); }
       function paintClip(g, gi, chap, x0, x1) { ctx.save(); ctx.beginPath(); ctx.rect(x0, 0, x1 - x0, H); ctx.clip(); paint(g, gi, chap); ctx.restore(); }
       var kind = cbCh;
       if (kind === 0) {
-        setFont(size); ctx.fillStyle = WHITE;
+        setFont(size); ctx.fillStyle = PRV;
         var Ln = linesOf(cur), Lo = linesOf(prv), del = prog(t, [.2, .9]), typ = prog(t, [1.0, 3.0]);
         var caret = null;
         if (t < 1.0 && Lo.length) {           // backspace the old copy from the end
@@ -345,12 +335,13 @@
             var tx = l.text.slice(0, n); ctx.fillText(tx, pad, l.y); if (n > 0 || !caret) caret = { x: pad + ctx.measureText(tx).width, y: l.y }; });
           if (del >= 1) caret = { x: pad, y: Lo[0].y };
         } else {                               // type the new copy
+          ctx.fillStyle = CUR;
           var totN = 0; Ln.forEach(function (l) { totN += l.text.length; });
           var shown = Math.floor(totN * typ);
           Ln.forEach(function (l) { var n = Math.max(0, Math.min(l.text.length, shown)); shown -= l.text.length;
             var tx = l.text.slice(0, n); ctx.fillText(tx, pad, l.y); if (n > 0 || !caret) caret = { x: pad + ctx.measureText(tx).width, y: l.y }; });
         }
-        if (caret && (t < 3.0 || Math.sin(t * 6) > 0)) { ctx.fillStyle = CYAN; ctx.fillRect(caret.x + size * .04, caret.y - size * .78, Math.max(3, size * .05), size * .84); }
+        if (caret && (t < 3.0 || Math.sin(t * 6) > 0)) { ctx.fillStyle = CUR === WHITE ? CYAN : WHITE; ctx.fillRect(caret.x + size * .04, caret.y - size * .78, Math.max(3, size * .05), size * .84); }
       } else if (kind === 1) {
         // design: one cursor. arrow selects the old copy and drags the corner to enlarge it,
         // then it turns into the pen tool, draws the new outlines with anchor points, the fill pours in and a colour sheen passes
@@ -373,7 +364,7 @@
         var gx0 = pad, gy0 = cur[0].top, gx1 = pad + Math.max(cur[0].width, cur[1].width, prv ? prv[0].width : 0, prv ? prv[1].width : 0), gy1 = cur[1].bottom;
         var sx0 = gx1 + 30, sy0 = gy1 + 30;
         if (t < T_SELD) {
-          if (prv) { drawText(prv[0], "fill", WHITE); drawText(prv[1], "fill", WHITE); }
+          if (prv) { drawText(prv[0], "fill", PRV); drawText(prv[1], "fill", PRV); }
           var dp = ease(prog(t, [T_IN, T_DRAG])), cxp = sx0 + (gx0 - 20 - sx0) * dp, cyp = sy0 + (gy0 - 20 - sy0) * dp;
           if (t > T_IN && t < T_DRAG) { ctx.fillStyle = "rgba(9,95,224,.22)"; ctx.fillRect(cxp, cyp, sx0 - cxp, sy0 - cyp); ctx.setLineDash([5, 4]); ctx.strokeStyle = CYAN; ctx.lineWidth = 1; ctx.strokeRect(cxp, cyp, sx0 - cxp, sy0 - cyp); ctx.setLineDash([]); }
           if (t >= T_DRAG) handles(gx0 - 8, gy0 - 8, gx1 + 8, gy1 + 8);
@@ -402,7 +393,7 @@
           var vS = (eM - L) / 3.1, x = t < .5 ? L : L + vS * (t - .5), sweeping = t > .5 && x < W + 50;   // one steady speed, straight off the screen
           var top = A0.top + size * .04, bot = B0.bottom - size * .02;
           var STENCIL = "rgba(255,255,255,.2)";
-          if (t < .5 && prv) both(function (g, i) { drawText(prv[i], "fill", WHITE); });
+          if (t < .5 && prv) both(function (g, i) { drawText(prv[i], "fill", PRV); });
           else if (x >= eM) both(function (g, i) { paint(g, i, 2); });
           else {
             both(function (g, i) { paintClip(g, i, 2, 0, x); });                       // printed: final colour straight away
@@ -426,7 +417,7 @@
           for (var i = 0; i < idx; i++) cut[letters[i].gi] = Math.max(cut[letters[i].gi], letters[i].x1);
           var finished = idx >= letters.length;
           [A0, B0].forEach(function (g, gi) {
-            if (finished) { drawText(g, "fill", WHITE); return; }
+            if (finished) { drawText(g, "fill", CUR); return; }
             clipX(g, 0, cut[gi]);                                  // cut letters: new copy
             if (t >= T0 || !prv) {                                  // not yet reached: faint cutting path of the new letters
               ctx.save(); ctx.beginPath(); ctx.rect(cut[gi], 0, W, H); ctx.clip(); ctx.lineWidth = Math.max(1, size / 110); ctx.strokeStyle = "rgba(255,255,255,.28)"; drawText(g, "stroke"); ctx.restore();
