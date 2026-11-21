@@ -273,11 +273,11 @@
       for (var ci = cbClicks.length - 1; ci >= 0; ci--) {
         var ck = cbClicks[ci]; if (now - ck.t > 40) { cbClicks.splice(ci, 1); continue; }
         var age = now - ck.t;                     // same band width and speed as the background ripples, starting right at the click
-        for (var kk = 0; kk < 3; kk++) {
-          var ag = age - kk * GAP / V; if (ag <= 0) continue;
+        for (var kk = 0; kk < 1; kk++) {      // a single ring per click
+          var ag = age; if (ag <= 0) continue;
           var rr2 = th * .5 + ag * V; if (rr2 > maxR) continue;
           var fa = Math.min(1, ag / .25) * (1 - rr2 / maxR);
-          band(ck.x, ck.y, rr2, th, "rgba(255,255,255," + (.15 * fa) + ")");
+          band(ck.x, ck.y, rr2, th, "rgba(255,255,255," + (BASE * 1.1 * fa) + ")");   // same opacity as the background ripples
         }
       }
       var fadeOut = 1 - prog(t, T.fade);
