@@ -417,6 +417,9 @@ form.brief { display: grid; gap: 28px; }
 .dark p, .dark .body p, .dark .eq-list li span:last-child, .dark .svc p, .dark .stat-strip p { color: rgba(255,255,255,.8) !important; }
 /* ---------- facility images follow the list order ---------- */
 .fac-rot img { opacity: 0; transition: opacity .8s ease; }
+.fac-rot { touch-action: pan-y; -webkit-user-select: none; user-select: none; }
+.fac-rot img { -webkit-user-drag: none; pointer-events: none; }
+@media (max-width: 760px) { .fac-rot img { transition-duration: .35s; } .fac-list li { cursor: pointer; } }
 .fac-rot img.on { opacity: 1; }
 .fac-list li { cursor: default; transition: color .3s ease; }
 .fac-list li span:first-child { opacity: .55; transition: opacity .3s ease; }
@@ -614,6 +617,6 @@ body.scrolling .work-grid { pointer-events: none; }   /* no hover effects firing
   <div class="lb-bot inner"><span class="label count" id="lbCount"></span></div>
 </div>
 
-<script src="data.js?v=20261121210923"></script>
-<script src="app.js?v=20261121210923"></script>
+<script src="data.js?v=20261121211535"></script>
+<script src="app.js?v=20261121211535"></script>
 </html>

@@ -168,7 +168,18 @@
       r.addEventListener("mouseenter", function () { hold = true; show(+r.getAttribute("data-i")); });
       r.addEventListener("mouseleave", function () { hold = false; });
     });
-    facTimer = setInterval(function () { if (!hold) show((cur + 1) % imgs.length); }, 3200);
+    function restart() { clearInterval(facTimer); facTimer = setInterval(function () { if (!hold) show((cur + 1) % imgs.length); }, 3200); }
+    restart();
+    // swipe the picture left/right (or tap a row) to step through the machines quickly
+    var box = document.querySelector(".fac-rot"), sx = null, sy = 0;
+    box.addEventListener("pointerdown", function (e) { sx = e.clientX; sy = e.clientY; });
+    function up(e) {
+      if (sx === null) return; var dx = e.clientX - sx, dy = e.clientY - sy; sx = null;
+      if (Math.abs(dx) < 30 || Math.abs(dx) < Math.abs(dy)) return;
+      show((cur + (dx < 0 ? 1 : -1) + imgs.length) % imgs.length); restart();
+    }
+    box.addEventListener("pointerup", up); box.addEventListener("pointercancel", function () { sx = null; });
+    rows.forEach(function (r) { r.addEventListener("click", function () { show(+r.getAttribute("data-i")); restart(); }); });
   }
   /* ---------------- HOME ---------------- */
   var homeOrder = [], homeShown = 0;
