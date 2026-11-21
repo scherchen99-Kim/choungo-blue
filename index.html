@@ -209,7 +209,8 @@ p { margin: 0; }
 .p-track { display: flex; gap: clamp(40px, 6vw, 88px); width: max-content; margin-top: clamp(32px, 4vw, 56px); animation: pmarq 40s linear infinite; }
 .p-track span { font-family: var(--display); font-weight: 800; font-size: clamp(20px, 2.2vw, 32px); letter-spacing: .02em; color: #9aa6b4; white-space: nowrap; transition: color .3s ease; }
 .p-track span:hover { color: var(--black); }
-.p-track { align-items: center; gap: clamp(48px, 6vw, 96px); }
+.p-track { align-items: center; gap: 0; }
+.p-track .p-item { flex: none; display: flex; align-items: center; padding-right: clamp(48px, 6vw, 96px); }   /* spacing inside each item, so the two halves are exactly equal and the loop never jumps */
 .p-track img { width: auto; max-width: none; object-fit: contain; display: block; }
 .partners:hover .p-track { animation-play-state: paused; }
 @keyframes pmarq { to { transform: translateX(-50%); } }
@@ -557,6 +558,6 @@ form.brief { display: grid; gap: 28px; }
   <div class="lb-bot inner"><span class="label count" id="lbCount"></span><span class="label" style="color:var(--grey)">Sample visual</span></div>
 </div>
 
-<script src="data.js?v=20261121155331"></script>
-<script src="app.js?v=20261121155331"></script>
+<script src="data.js?v=20261121155727"></script>
+<script src="app.js?v=20261121155727"></script>
 </html>
