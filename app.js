@@ -355,11 +355,11 @@
         // the pen tool walks each line turning old outlines into new ones -> the fill pours in (outline stays, so weight doesn't jump)
         // select the old copy -> it is deleted -> the corner is dragged out and the new copy appears as a picture (a plate)
         // -> the pen tool traces each letter -> the plate around the letters is cut away and only the letters stay
-        var T_IN = .3, T_DRAG = 1.0, T_DEL = 1.7, T_GROW = 2.4, T_A = 3.4, T_B = 4.3, T_CUT = 4.9;
+        var T_IN = .3, T_DRAG = 1.0, T_DEL = 1.8, T_GROW = 2.6, T_PEN = 3.1, T_A = 4.0, T_B = 4.9, T_CUT = 5.5;   // blurred copy is held ~0.5s before the pen starts
         // blurred copy = 14 faint offset copies; FAINT is tuned so the blurred letters read at roughly 5%
         function haze(gs, col, amount) {
           if (amount <= 0) return;
-          var br = Math.max(4, size * .06), a1 = 1 - Math.pow(1 - .05 * amount, 1 / 14);
+          var br = Math.max(4, size * .06), a1 = 1 - Math.pow(1 - .3 * amount, 1 / 14);   // blurred letters read at ~30%, visible on the blue plate
           for (var bk = 0; bk < 14; bk++) {
             var an = bk / 14 * Math.PI * 2, r3 = br * (bk % 2 ? 1 : .55);
             ctx.save(); ctx.translate(Math.cos(an) * r3, Math.sin(an) * r3); ctx.globalAlpha = a1;
@@ -404,11 +404,11 @@
             ctx.globalAlpha = 1;
             ctx.restore();
           } else { drawText(cur[0], "fill", CUR); drawText(cur[1], "fill", CUR); }
-          if (t < T_A - .9) handles(bx0 - 8, by0 - 8, bx1 + 8, by1 + 8);
+          if (t < T_PEN) handles(bx0 - 8, by0 - 8, bx1 + 8, by1 + 8);
           if (t < T_GROW + .15) arrow(bx1 + 8, by1 + 8);
           // 3) pen tool traces the letter outlines, line by line
           var penX = null, penY = null;
-          [[0, T_GROW + .1, T_A], [1, T_A, T_B]].forEach(function (d) {
+          [[0, T_PEN, T_A], [1, T_A, T_B]].forEach(function (d) {
             var g = cur[d[0]], pp = ease(prog(t, [d[1], d[2]])), ox = pad - 6 + (g.width + 12) * pp;
             if (pp <= 0 || cut >= 1) return;
             if (cut < 1) clipX(g, 0, ox);   // where the path is cut, the letter becomes crisp and clean
