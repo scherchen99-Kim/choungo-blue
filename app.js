@@ -715,7 +715,15 @@
   }
   document.getElementById("menuOpen").addEventListener("click", function () { setMenu(true); });
   document.getElementById("menuClose").addEventListener("click", function () { setMenu(false); });
-  mm.querySelectorAll("nav a").forEach(function (a) { a.addEventListener("click", function () { setMenu(false); }); });
+  // tapped item turns blue first, then the page changes
+  mm.querySelectorAll("nav a").forEach(function (a) {
+    a.addEventListener("click", function (e) {
+      e.preventDefault();
+      var href = a.getAttribute("href");
+      a.classList.add("tapped");
+      setTimeout(function () { setMenu(false); a.classList.remove("tapped"); location.hash = href; }, 320);
+    });
+  });
 
   /* ---------------- Router ---------------- */
   var routeName = "home";
