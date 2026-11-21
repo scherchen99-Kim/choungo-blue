@@ -689,18 +689,19 @@
 
   /* ---------------- Lightbox ---------------- */
   var lb = document.getElementById("lightbox"), lbImg = document.getElementById("lbImg");
-  var lbList = [], lbI = 0, lbLast = null;
+  var lbList = [], lbI = 0, lbLast = null, lbProjects = [];
   function lbShow(n, instant) {
     lbI = (n + lbList.length) % lbList.length;
     var go = function () {
       lbImg.src = lbList[lbI];
+      if (lbProjects.length === lbList.length && lbProjects[lbI]) document.getElementById("lbTitle").textContent = lbProjects[lbI].title;
       document.getElementById("lbCount").textContent = pad(lbI + 1) + " / " + pad(lbList.length);
       lbImg.classList.remove("swap");
     };
     if (instant) go(); else { lbImg.classList.add("swap"); setTimeout(go, 180); }
   }
-  function openLB(list, i, title) {
-    lbList = list; lbLast = document.activeElement;
+  function openLB(list, i, title, projects) {
+    lbList = list; lbProjects = projects || []; lbLast = document.activeElement;
     document.getElementById("lbTitle").textContent = title;
     lbShow(i, true);
     lb.classList.add("open"); lb.setAttribute("aria-hidden", "false");
@@ -720,8 +721,12 @@
     var slug = t.getAttribute("href").slice(6), p = D.projects.filter(function (q) { return q.slug === slug; })[0];
     if (!p) return;
     e.preventDefault();
-    var list = (p.cover ? [p.cover] : []).concat(p.images);
-    openLB(list, 0, p.title);
+    // arrows step through the projects shown in this grid (one picture each), not inside one project
+    var grid = t.parentNode, tiles = Array.prototype.slice.call(grid.querySelectorAll('a.tile[href^="#work-"]')).filter(function (x) { return !x.hidden && x.offsetParent !== null; });
+    if (!tiles.length) tiles = [t];
+    lbProjects = tiles.map(function (x) { var sl = x.getAttribute("href").slice(6); return D.projects.filter(function (q) { return q.slug === sl; })[0]; }).filter(Boolean);
+    var idx = lbProjects.indexOf(p); if (idx < 0) { lbProjects = [p]; idx = 0; }
+    openLB(lbProjects.map(function (q) { return q.cover || q.images[0]; }), idx, p.title, lbProjects);
   });
   document.getElementById("lbPrev").addEventListener("click", function () { lbShow(lbI - 1); });
   document.getElementById("lbNext").addEventListener("click", function () { lbShow(lbI + 1); });
