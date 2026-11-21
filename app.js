@@ -355,7 +355,18 @@
         // the pen tool walks each line turning old outlines into new ones -> the fill pours in (outline stays, so weight doesn't jump)
         // select the old copy -> it is deleted -> the corner is dragged out and the new copy appears as a picture (a plate)
         // -> the pen tool traces each letter -> the plate around the letters is cut away and only the letters stay
-        var T_IN = .3, T_DRAG = 1.0, T_DEL = 1.3, T_GROW = 2.1, T_A = 3.1, T_B = 4.1, T_CUT = 4.8;
+        var T_IN = .3, T_DRAG = 1.0, T_DEL = 1.7, T_GROW = 2.4, T_A = 3.4, T_B = 4.3, T_CUT = 4.9;
+        // blurred copy = 14 faint offset copies; FAINT is tuned so the blurred letters read at roughly 5%
+        function haze(gs, col, amount) {
+          if (amount <= 0) return;
+          var br = Math.max(4, size * .06), a1 = 1 - Math.pow(1 - .05 * amount, 1 / 14);
+          for (var bk = 0; bk < 14; bk++) {
+            var an = bk / 14 * Math.PI * 2, r3 = br * (bk % 2 ? 1 : .55);
+            ctx.save(); ctx.translate(Math.cos(an) * r3, Math.sin(an) * r3); ctx.globalAlpha = a1;
+            gs.forEach(function (g) { drawText(g, "fill", col); }); ctx.restore();
+          }
+          ctx.globalAlpha = 1;
+        }
         var PLATE = "#007fff", PATH = "#000055";
         var lw = Math.max(1.5, size / 80);
         var oX0 = pad, oY0 = prv ? prv[0].top : cur[0].top, oX1 = pad + (prv ? Math.max(prv[0].width, prv[1].width) : 40), oY1 = prv ? prv[1].bottom : cur[1].bottom;
@@ -368,7 +379,11 @@
         }
         if (t < T_DEL) {
           // 1) marquee-select the old copy
-          if (prv) { drawText(prv[0], "fill", PRV); drawText(prv[1], "fill", PRV); }
+          var soft = ease(prog(t, [T_DRAG + .1, T_DEL]));
+          if (prv) {
+            ctx.globalAlpha = 1 - soft; drawText(prv[0], "fill", PRV); drawText(prv[1], "fill", PRV); ctx.globalAlpha = 1;
+            haze([prv[0], prv[1]], PRV, Math.min(1, soft * 3));
+          }
           var dp = ease(prog(t, [T_IN, T_DRAG])), cxp = sx0 + (oX0 - 20 - sx0) * dp, cyp = sy0 + (oY0 - 20 - sy0) * dp;
           if (t > T_IN && t < T_DRAG) { ctx.fillStyle = "rgba(9,95,224,.22)"; ctx.fillRect(cxp, cyp, sx0 - cxp, sy0 - cyp); ctx.setLineDash([5, 4]); ctx.strokeStyle = CYAN; ctx.lineWidth = 1; ctx.strokeRect(cxp, cyp, sx0 - cxp, sy0 - cyp); ctx.setLineDash([]); }
           if (t >= T_DRAG) handles(oX0 - 8, oY0 - 8, oX1 + 8, oY1 + 8);
@@ -382,13 +397,10 @@
           if (cut < 1) {
             ctx.save(); ctx.beginPath(); ctx.rect(bx0, by0, bx1 - bx0, by1 - by0); ctx.clip();
             ctx.globalAlpha = 1 - cut; ctx.fillStyle = PLATE; ctx.fillRect(bx0, by0, bx1 - bx0, by1 - by0);
-            // the new copy arrives soft and blurry inside the picture (drawn as a halo of faint copies, works in every browser)
-            var br = Math.max(4, size * .06);
-            for (var bk = 0; bk < 14; bk++) {
-              var an = bk / 14 * Math.PI * 2, rr3 = br * (bk % 2 ? 1 : .55);
-              ctx.save(); ctx.translate(Math.cos(an) * rr3, Math.sin(an) * rr3); ctx.globalAlpha = (1 - cut) * .14;
-              drawText(cur[0], "fill", CUR); drawText(cur[1], "fill", CUR); ctx.restore();
-            }
+            // blurred first copy turns into the blurred second copy, both faint
+            var morph = ease(prog(t, [T_DEL, T_GROW]));
+            if (prv) haze([prv[0], prv[1]], PRV, (1 - morph) * (1 - cut));
+            haze([cur[0], cur[1]], CUR, morph * (1 - cut));
             ctx.globalAlpha = 1;
             ctx.restore();
           } else { drawText(cur[0], "fill", CUR); drawText(cur[1], "fill", CUR); }
